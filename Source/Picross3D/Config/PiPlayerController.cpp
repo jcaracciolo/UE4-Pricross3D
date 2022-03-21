@@ -27,7 +27,7 @@ void APiPlayerController::XRotation(float AxisValue)
 		GameMode = Cast<APiGameMode>(GetWorld()->GetAuthGameMode());
 		if (!IsValid(GameMode))
 		{
-			UE_LOG(LogTemp, Error, TEXT("GameMode failed to be casted to APIGameMode"));
+			UE_LOG(LogTemp, Error, TEXT("PlayerController: GameMode failed to be casted to APIGameMode"));
 			return;
 		}
 	}

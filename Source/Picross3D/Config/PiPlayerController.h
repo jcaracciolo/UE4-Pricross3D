@@ -15,7 +15,7 @@ enum class InputState: uint8
 	MOVEMENT,
 	BREAKING,
 	PAINTING,
-  };
+};
 
 /**
  * 
@@ -23,29 +23,27 @@ enum class InputState: uint8
 UCLASS()
 class PICROSS3D_API APiPlayerController : public APlayerController
 {
-
-	
 	GENERATED_BODY()
 
-	private:
-		virtual void BeginPlay() override;
+private:
+	virtual void BeginPlay() override;
 
-		UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-		void XRotation(float AxisValue);
+	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
+	void XRotation(float AxisValue);
 
-		UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-		void YRotation(float AxisValue);
+	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
+	void YRotation(float AxisValue);
 
-		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pi Input", meta = (AllowPrivateAccess = "true"))
-		InputState CurrentState = InputState::DEFAULT;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pi Input", meta = (AllowPrivateAccess = "true"))
+	InputState CurrentState = InputState::DEFAULT;
 
-		DECLARE_DELEGATE_OneParam(SetInputStateDelegate, InputState);
-		UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-		void SetInputState(InputState NewState)
-		{
-			CurrentState = NewState;
-		}
+	DECLARE_DELEGATE_OneParam(SetInputStateDelegate, InputState);
+	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
+	void SetInputState(InputState NewState)
+	{
+		CurrentState = NewState;
+	}
 
-		//TODO can i leave this to be GC?
-		APiGameMode* GameMode;
+	//TODO can i leave this to be GC?
+	APiGameMode* GameMode;
 };

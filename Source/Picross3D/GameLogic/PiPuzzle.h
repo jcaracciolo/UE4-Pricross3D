@@ -6,12 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "PiPuzzle.generated.h"
 
+class APiCube;
+
 UCLASS()
 class PICROSS3D_API APiPuzzle : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	APiPuzzle();
 
@@ -19,8 +21,17 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true"))
+	int Height;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true"))
+	int Depth;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true"))
+	int Width;
 
+
+	UPROPERTY()
+	TArray<APiCube*> Cubes;
 };
