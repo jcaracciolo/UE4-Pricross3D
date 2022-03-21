@@ -4,6 +4,7 @@
 #include "PiPuzzle.h"
 
 #include "PiCube.h"
+#include "Picross3D/Config/PiCamera.h"
 #include "Picross3D/Config/PiGameMode.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogPiPuzzle, Log, All);
@@ -15,35 +16,38 @@ APiPuzzle::APiPuzzle()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
 void APiPuzzle::BeginPlay()
 {
 	Super::BeginPlay();
 
-	auto GameMode = Cast<APiGameMode>(GetWorld()->GetAuthGameMode());
-	if(!IsValid(GameMode))
+	auto Pawn = Cast<APiCamera>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if(!IsValid(Pawn))
 	{
-		UE_LOG(LogPiPuzzle, Error, TEXT("GameMode failed to be casted to APIGameMode"));
+		UE_LOG(LogPiPuzzle, Error, TEXT("Pawn failed to be casted to APiCamera"));
 		return;
 	}
+	Pawn->SetupPuzzleSize(PuzzleSize.GetMax());
+}
 
+// Called when the game starts or when spawned
+void APiPuzzle::GenerateCubes()
+{
+	UE_LOG(LogPiPuzzle, Log, TEXT("Creating Cubes for %d,%d,%d"),PuzzleSize.X, PuzzleSize.Y, PuzzleSize.Z);
 
-	UE_LOG(LogPiPuzzle, Log, TEXT("Creating Cubes for %d,%d,%d"),Width,Height,Depth);
-
-	for (auto i = 0; i < Width; i++)
+	for (auto i = 0; i < PuzzleSize.X; i++)
 	{
-		for (auto j = 0; j < Height; j++)
+		for (auto j = 0; j < PuzzleSize.Y; j++)
 		{
-			for (auto k = 0; k < Depth; k++)
+			for (auto k = 0; k < PuzzleSize.Z; k++)
 			{
-				APiCube* Cube = GetWorld()->SpawnActor<APiCube>(GameMode->GetCubeClass());
+				APiCube* Cube = GetWorld()->SpawnActor<APiCube>(CubeClass);
 
 				Cube->SetupPuzzlePosition({i, j, k});
 				Cube->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 				Cube->SetActorRelativeLocation({
-					100*(i - Width / 2.0f + 0.5f),
-					100*(j - Height / 2.0f + 0.5f),
-					100*(k - Depth / 2.0f + 0.5f)
+					100*(i - PuzzleSize.X / 2.0f + 0.5f),
+					100*(j - PuzzleSize.Y / 2.0f + 0.5f),
+					100*(k - PuzzleSize.Z / 2.0f + 0.5f)
 				});
 				
 			}

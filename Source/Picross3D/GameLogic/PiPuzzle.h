@@ -17,20 +17,18 @@ public:
 	// Sets default values for this actor's properties
 	APiPuzzle();
 
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	UFUNCTION(BlueprintCallable, CallInEditor, Category="Cubes")
+	void GenerateCubes();
 
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true"))
-	int Height;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true", ForceInlineRow))
+	FIntVector PuzzleSize;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true"))
-	int Depth;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true"))
-	int Width;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess = "true"))
+	TSubclassOf<APiCube> CubeClass;
 
 	UPROPERTY()
 	TArray<APiCube*> Cubes;

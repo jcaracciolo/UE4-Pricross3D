@@ -45,5 +45,6 @@ private:
 	}
 
 	//TODO can i leave this to be GC?
+	//In theory if it gets CG, i can get access to the newer one
 	APiGameMode* GameMode;
 };

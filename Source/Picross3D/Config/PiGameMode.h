@@ -23,9 +23,6 @@ class PICROSS3D_API APiGameMode : public AGameModeBase
 		//TODO is this the correct way to reference an Asset?
 		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Puzzle", meta=(AllowPrivateAccess = "true"))
 		TSubclassOf<APiPuzzle> PuzzleToLoad;
-
-		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Puzzle", meta=(AllowPrivateAccess = "true"))
-		TSubclassOf<APiCube> CubeClass;
 	
 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Puzzle", meta=(AllowPrivateAccess = "true"))
 		APiPuzzle* CurrentPuzzle;
@@ -34,10 +31,5 @@ class PICROSS3D_API APiGameMode : public AGameModeBase
 		APiPuzzle* GetCurrentPuzzle() const
 		{
 			return CurrentPuzzle;
-		}
-
-		TSubclassOf<APiCube> GetCubeClass() const
-		{
-			return CubeClass;
 		}
 };

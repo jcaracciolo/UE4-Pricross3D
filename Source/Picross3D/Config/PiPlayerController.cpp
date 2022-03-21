@@ -6,6 +6,8 @@
 #include "PiGameMode.h"
 #include "Picross3D/GameLogic/PiPuzzle.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogPiPuzzle, Log, All);
+
 void APiPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -27,14 +29,14 @@ void APiPlayerController::XRotation(float AxisValue)
 		GameMode = Cast<APiGameMode>(GetWorld()->GetAuthGameMode());
 		if (!IsValid(GameMode))
 		{
-			UE_LOG(LogTemp, Error, TEXT("PlayerController: GameMode failed to be casted to APIGameMode"));
+			UE_LOG(LogPiPuzzle, Error, TEXT("GameMode failed to be casted to APIGameMode"));
 			return;
 		}
 	}
 
 	if (CurrentState == InputState::MOVEMENT)
 	{
-		GameMode->GetCurrentPuzzle()->AddActorWorldRotation({0, AxisValue, 0});
+		GameMode->GetCurrentPuzzle()->AddActorLocalRotation({0, AxisValue, 0});
 	}
 }
 
@@ -47,7 +49,7 @@ void APiPlayerController::YRotation(float AxisValue)
 		GameMode = Cast<APiGameMode>(GetWorld()->GetAuthGameMode());
 		if (!IsValid(GameMode))
 		{
-			UE_LOG(LogTemp, Error, TEXT("GameMode failed to be casted to APIGameMode"));
+			UE_LOG(LogPiPuzzle, Error, TEXT("GameMode failed to be casted to APIGameMode"));
 			return;
 		}
 	}
