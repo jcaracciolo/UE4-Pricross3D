@@ -37,7 +37,6 @@ void APiPuzzle::BeginPlay()
 			for (auto k = 0; k < Depth; k++)
 			{
 				APiCube* Cube = GetWorld()->SpawnActor<APiCube>(GameMode->GetCubeClass());
-				UE_LOG(LogPiPuzzle, Log, TEXT("Created a new Cubes for %d,%d,%d"),i,j,k);
 
 				Cube->SetupPuzzlePosition({i, j, k});
 				Cube->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
