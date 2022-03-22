@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PiGameMode.h"
 #include "GameFramework/PlayerController.h"
 #include "PiPlayerController.generated.h"
 
@@ -11,12 +10,14 @@
 UENUM()
 enum class InputState: uint8
 {
-	DEFAULT,
-	MOVEMENT,
+	//TODO deleted an emun here and mapping in UE is weird now
+	MOVEMENT = 1,
 	BREAKING,
 	PAINTING,
 };
 
+class APiGameMode;
+class APiCamera;
 /**
  * 
  */
@@ -38,7 +39,7 @@ private:
 	void YRotation(float AxisValue);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pi Input", meta = (AllowPrivateAccess = "true"))
-	InputState CurrentState = InputState::DEFAULT;
+	InputState CurrentState = InputState::MOVEMENT;
 
 	DECLARE_DELEGATE_TwoParams(SetInputStateDelegate, InputState, bool);
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
@@ -46,5 +47,12 @@ private:
 
 	//TODO can i leave this to be GC?
 	//In theory if it gets CG, i can get access to the newer one
+	// Or should i say UPROPERTY() with TWeakObjectPtr
 	APiGameMode* GameMode;
+	bool GetGameMode();
+
+	//TODO can i leave this to be GC?
+	//In theory if it gets CG, i can get access to the newer one
+	APiCamera* PiCamera;
+	bool GetPiCamera();
 };

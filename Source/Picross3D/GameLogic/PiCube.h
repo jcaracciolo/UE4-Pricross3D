@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "PiCube.generated.h"
 
+class APiPuzzle;
 UCLASS()
 class PICROSS3D_API APiCube : public AActor
 {
@@ -15,12 +16,28 @@ public:
 	// Sets default values for this actor's properties
 	APiCube();
 
+	// TODO Do i need to declare all functions as UFUNCTIONS() ? Even if i am not using them
+	//as delegates or in a blueprint
+	// Is it ok if i force this to be an R-Value? Sounds weird
+	// Should i use a reference? Or not even just a copy?
 	void SetupPuzzlePosition(const FIntVector&& SetupPosition);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PiPuzzle")
-	bool isSolution;
+	UFUNCTION(BlueprintImplementableEvent, Category="Cubes", meta=(BlueprintProtected))
+	void Paint();
+
+	// TODO Why do i put UFUNCTION here?
+	// Is it ok to inline this on the Header?
+	UFUNCTION()
+	bool IsSolution() const;
+	
+	UFUNCTION()
+	FIntVector GetPuzzlePosition() const;
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	FIntVector PuzzlePosition;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
+	bool bIsSolution;
+
 };

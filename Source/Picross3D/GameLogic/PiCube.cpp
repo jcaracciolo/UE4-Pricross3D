@@ -14,3 +14,13 @@ void inline APiCube::SetupPuzzlePosition(const FIntVector&& SetupPosition)
 {
 	PuzzlePosition = SetupPosition;
 }
+
+FIntVector APiCube::GetPuzzlePosition() const
+{
+	return PuzzlePosition;
+}
+
+bool APiCube::IsSolution() const
+{
+	return bIsSolution;
+}

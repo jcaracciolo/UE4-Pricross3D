@@ -3,10 +3,12 @@
 
 #include "PiPlayerController.h"
 
+#include "DrawDebugHelpers.h"
+#include "PiCamera.h"
 #include "PiGameMode.h"
 #include "Picross3D/GameLogic/PiPuzzle.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogPiPuzzle, Log, All);
+DEFINE_LOG_CATEGORY_STATIC(LogPiPlayerController, Log, All);
 
 void APiPlayerController::BeginPlay()
 {
@@ -39,7 +41,7 @@ void APiPlayerController::BeginPlay()
 	                                                  InputState::PAINTING, true
 	);
 	InputComponent->BindAction("TouchScreen", IE_Pressed, this,
-						   &APiPlayerController::OnAction
+	                           &APiPlayerController::OnAction
 	);
 }
 
@@ -47,41 +49,78 @@ void APiPlayerController::ProcessStateChange(InputState NewState, bool Released)
 {
 	switch (CurrentState)
 	{
-	case InputState::DEFAULT:
-		CurrentState = Released ? InputState::DEFAULT : NewState;
-		break;
 	case InputState::MOVEMENT:
-		CurrentState = NewState == InputState::MOVEMENT && Released ? InputState::DEFAULT : NewState;
+		CurrentState = NewState == InputState::MOVEMENT && Released ? InputState::MOVEMENT : NewState;
 		break;
 	case InputState::BREAKING:
-		CurrentState = NewState == InputState::BREAKING && Released ? InputState::DEFAULT : InputState::BREAKING;
+		CurrentState = NewState == InputState::BREAKING && Released ? InputState::MOVEMENT : InputState::BREAKING;
 		break;
 	case InputState::PAINTING:
-		CurrentState = NewState == InputState::PAINTING && Released ? InputState::DEFAULT : InputState::PAINTING;
+		CurrentState = NewState == InputState::PAINTING && Released ? InputState::MOVEMENT : InputState::PAINTING;
 		break;
 	}
 }
 
-void APiPlayerController::OnAction()
-{
-	UE_LOG(LogPiPuzzle, Error, TEXT("CLICK %d"), CurrentState);
-
-}
-
-
-void APiPlayerController::XRotation(float AxisValue)
+bool APiPlayerController::GetGameMode()
 {
 	//TODO is this the correct way of retrieving a GameMode
-	//TODO Is this neccesary? Should i do IsValid on every Input?
 	if (!IsValid(GameMode))
 	{
 		GameMode = Cast<APiGameMode>(GetWorld()->GetAuthGameMode());
 		if (!IsValid(GameMode))
 		{
-			UE_LOG(LogPiPuzzle, Error, TEXT("GameMode failed to be casted to APIGameMode"));
-			return;
+			UE_LOG(LogPiPlayerController, Error, TEXT("GameMode failed to be casted to APIGameMode"));
+			return false;
 		}
 	}
+
+	return true;
+}
+
+bool APiPlayerController::GetPiCamera()
+{
+	//TODO is this the correct way of retrieving a GameMode
+	PiCamera = Cast<APiCamera>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if (!IsValid(PiCamera))
+	{
+		UE_LOG(LogPiPlayerController, Error, TEXT("Camera failed to be casted to APiCamera"));
+		return false;
+	}
+
+	return true;
+}
+
+void APiPlayerController::OnAction()
+{
+	if (!GetGameMode() || !GetPiCamera()) { return; }
+
+	FHitResult OutHit;
+	if (GetHitResultUnderCursor(ECC_Visibility, false, OutHit))
+	{
+		//TODO is this how you cast out of a Hit?
+		auto Cube = Cast<APiCube>(OutHit.GetActor());
+		UE_LOG(LogPiPlayerController, Error, TEXT("Hit Cube %p"), Cube);
+
+		//TODO here IsValid is not required because Cube would be null (that's how GetActor works
+		// since it has a WeakPtr inside). Just null check then?
+		if (IsValid(Cube))
+		{
+			if (CurrentState == InputState::BREAKING)
+			{
+				GameMode->GetCurrentPuzzle()->Break(Cube);
+			}
+			else if (CurrentState == InputState::PAINTING)
+			{
+				GameMode->GetCurrentPuzzle()->Paint(Cube);
+			}
+		}
+	}
+}
+
+
+void APiPlayerController::XRotation(float AxisValue)
+{
+	if (!GetGameMode()) { return; }
 
 	if (CurrentState == InputState::MOVEMENT)
 	{
@@ -91,17 +130,7 @@ void APiPlayerController::XRotation(float AxisValue)
 
 void APiPlayerController::YRotation(float AxisValue)
 {
-	//TODO is this the correct way of retrieving a GameMode
-	//TODO Is this neccesary? Should i do IsValid on every Input?
-	if (!IsValid(GameMode))
-	{
-		GameMode = Cast<APiGameMode>(GetWorld()->GetAuthGameMode());
-		if (!IsValid(GameMode))
-		{
-			UE_LOG(LogPiPuzzle, Error, TEXT("GameMode failed to be casted to APIGameMode"));
-			return;
-		}
-	}
+	if (!GetGameMode()) { return; }
 
 	if (CurrentState == InputState::MOVEMENT)
 	{

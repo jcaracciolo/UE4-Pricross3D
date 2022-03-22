@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Camera/CameraComponent.h"
 #include "GameFramework/Pawn.h"
 #include "PiCamera.generated.h"
 
@@ -15,6 +16,9 @@ public:
 	// Sets default values for this pawn's properties
 	APiCamera();
 
-	UFUNCTION(BlueprintImplementableEvent, Category="Pi Input", meta=(BlueprintProtected))
-	void SetupPuzzleSize(int Cubes);
+	void SetupPuzzleSize(int Cubes) const;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PiCamera", meta=(AllowPrivateAccess = "true"))
+	UCameraComponent* Camera;
 };

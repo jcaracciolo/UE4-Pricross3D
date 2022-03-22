@@ -23,13 +23,21 @@ public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Cubes")
 	void GenerateCubes();
 
+	//TODO Do i just pass a pointer here? will i have some issues with GC?
+	// The same cube is refereced somewhere else. but what if it isnt?
+	UFUNCTION()
+	void Break(APiCube* Cube);
+
+	UFUNCTION()
+	void Paint(APiCube* Cube);
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true", ForceInlineRow))
 	FIntVector PuzzleSize;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess = "true"))
 	TSubclassOf<APiCube> CubeClass;
-
+	
 	UPROPERTY()
 	TArray<APiCube*> Cubes;
 };

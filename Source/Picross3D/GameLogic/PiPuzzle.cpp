@@ -54,3 +54,14 @@ void APiPuzzle::GenerateCubes()
 		}
 	}
 }
+
+void APiPuzzle::Break(APiCube* Cube)
+{
+	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"),Cube->GetPuzzlePosition().X, PuzzleSize.Y, PuzzleSize.Z);
+	Cube->Destroy();
+}
+
+void APiPuzzle::Paint(APiCube* Cube)
+{
+	Cube->Paint();
+}
