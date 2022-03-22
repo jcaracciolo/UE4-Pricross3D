@@ -22,8 +22,8 @@ public:
 	// Should i use a reference? Or not even just a copy?
 	void SetupPuzzlePosition(const FIntVector&& SetupPosition);
 
-	UFUNCTION(BlueprintImplementableEvent, Category="Cubes", meta=(BlueprintProtected))
-	void Paint();
+	UFUNCTION(BlueprintNativeEvent, Category="Cubes", meta=(BlueprintProtected))
+	void TogglePaint();
 
 	// TODO Why do i put UFUNCTION here?
 	// Is it ok to inline this on the Header?
@@ -32,6 +32,7 @@ public:
 	
 	UFUNCTION()
 	FIntVector GetPuzzlePosition() const;
+	bool IsPainted() const;
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
@@ -40,4 +41,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	bool bIsSolution;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
+	bool bIsPainted = false;
 };

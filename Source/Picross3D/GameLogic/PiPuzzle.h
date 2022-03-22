@@ -31,6 +31,9 @@ public:
 	UFUNCTION()
 	void Paint(APiCube* Cube);
 
+	UFUNCTION()
+	bool IsCompleted();
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true", ForceInlineRow))
 	FIntVector PuzzleSize;

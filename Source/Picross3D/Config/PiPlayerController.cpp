@@ -99,8 +99,7 @@ void APiPlayerController::OnAction()
 	{
 		//TODO is this how you cast out of a Hit?
 		auto Cube = Cast<APiCube>(OutHit.GetActor());
-		UE_LOG(LogPiPlayerController, Error, TEXT("Hit Cube %p"), Cube);
-
+ 
 		//TODO here IsValid is not required because Cube would be null (that's how GetActor works
 		// since it has a WeakPtr inside). Just null check then?
 		if (IsValid(Cube))
@@ -108,6 +107,12 @@ void APiPlayerController::OnAction()
 			if (CurrentState == InputState::BREAKING)
 			{
 				GameMode->GetCurrentPuzzle()->Break(Cube);
+
+				if(GameMode->GetCurrentPuzzle()->IsCompleted())
+				{
+					UE_LOG(LogPiPlayerController, Error, TEXT("YOU WON!!!!"));
+					
+				}
 			}
 			else if (CurrentState == InputState::PAINTING)
 			{

@@ -27,6 +27,14 @@ void APiPuzzle::BeginPlay()
 		return;
 	}
 	Pawn->SetupPuzzleSize(PuzzleSize.GetMax());
+
+	ForEachComponent<UChildActorComponent>(false, [this] (UChildActorComponent* ChildActor){
+		//TODO can i do an if like this or should i check ISValid ?
+		if (APiCube* Cube = Cast<APiCube>(ChildActor->GetChildActor()))
+		{
+			Cubes.Add(Cube);
+		}
+	});
 }
 
 // Called when the game starts or when spawned
@@ -57,11 +65,31 @@ void APiPuzzle::GenerateCubes()
 
 void APiPuzzle::Break(APiCube* Cube)
 {
-	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"),Cube->GetPuzzlePosition().X, PuzzleSize.Y, PuzzleSize.Z);
-	Cube->Destroy();
+	FIntVector PuzzlePosition = Cube->GetPuzzlePosition();
+	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"),PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
+	if(!Cube->IsSolution() && !Cube->IsPainted())
+	{
+		Cube->Destroy();
+	}
 }
 
 void APiPuzzle::Paint(APiCube* Cube)
 {
-	Cube->Paint();
+	Cube->TogglePaint();
+}
+
+bool APiPuzzle::IsCompleted()
+{
+	for(auto Cube: Cubes)
+	{
+		FIntVector PuzzlePosition = Cube->GetPuzzlePosition();
+		UE_LOG(LogPiPuzzle, Log, TEXT("Checking Cube %d,%d,%d"),PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
+
+		if(IsValid(Cube) && !Cube->IsSolution())
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

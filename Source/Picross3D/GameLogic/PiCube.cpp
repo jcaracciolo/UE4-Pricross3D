@@ -15,9 +15,19 @@ void inline APiCube::SetupPuzzlePosition(const FIntVector&& SetupPosition)
 	PuzzlePosition = SetupPosition;
 }
 
+void APiCube::TogglePaint_Implementation()
+{
+	bIsPainted = !bIsPainted;
+}
+
 FIntVector APiCube::GetPuzzlePosition() const
 {
 	return PuzzlePosition;
+}
+
+bool APiCube::IsPainted() const
+{
+	return bIsPainted;
 }
 
 bool APiCube::IsSolution() const
