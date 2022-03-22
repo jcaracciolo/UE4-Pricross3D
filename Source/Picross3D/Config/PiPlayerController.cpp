@@ -15,10 +15,59 @@ void APiPlayerController::BeginPlay()
 	InputComponent->BindAxis("XRotation", this, &APiPlayerController::XRotation);
 	InputComponent->BindAxis("YRotation", this, &APiPlayerController::YRotation);
 	InputComponent->BindAction<SetInputStateDelegate>("TouchScreen", IE_Pressed, this,
-	                                                  &APiPlayerController::SetInputState, InputState::MOVEMENT);
+	                                                  &APiPlayerController::ProcessStateChange,
+	                                                  InputState::MOVEMENT, false
+	);
 	InputComponent->BindAction<SetInputStateDelegate>("TouchScreen", IE_Released, this,
-	                                                  &APiPlayerController::SetInputState, InputState::DEFAULT);
+	                                                  &APiPlayerController::ProcessStateChange,
+	                                                  InputState::MOVEMENT, true
+	);
+	InputComponent->BindAction<SetInputStateDelegate>("BreakToggle", IE_Pressed, this,
+	                                                  &APiPlayerController::ProcessStateChange,
+	                                                  InputState::BREAKING, false
+	);
+	InputComponent->BindAction<SetInputStateDelegate>("BreakToggle", IE_Released, this,
+	                                                  &APiPlayerController::ProcessStateChange,
+	                                                  InputState::BREAKING, true
+	);
+	InputComponent->BindAction<SetInputStateDelegate>("PaintToggle", IE_Pressed, this,
+	                                                  &APiPlayerController::ProcessStateChange,
+	                                                  InputState::PAINTING, false
+	);
+	InputComponent->BindAction<SetInputStateDelegate>("PaintToggle", IE_Released, this,
+	                                                  &APiPlayerController::ProcessStateChange,
+	                                                  InputState::PAINTING, true
+	);
+	InputComponent->BindAction("TouchScreen", IE_Pressed, this,
+						   &APiPlayerController::OnAction
+	);
 }
+
+void APiPlayerController::ProcessStateChange(InputState NewState, bool Released)
+{
+	switch (CurrentState)
+	{
+	case InputState::DEFAULT:
+		CurrentState = Released ? InputState::DEFAULT : NewState;
+		break;
+	case InputState::MOVEMENT:
+		CurrentState = NewState == InputState::MOVEMENT && Released ? InputState::DEFAULT : NewState;
+		break;
+	case InputState::BREAKING:
+		CurrentState = NewState == InputState::BREAKING && Released ? InputState::DEFAULT : InputState::BREAKING;
+		break;
+	case InputState::PAINTING:
+		CurrentState = NewState == InputState::PAINTING && Released ? InputState::DEFAULT : InputState::PAINTING;
+		break;
+	}
+}
+
+void APiPlayerController::OnAction()
+{
+	UE_LOG(LogPiPuzzle, Error, TEXT("CLICK %d"), CurrentState);
+
+}
+
 
 void APiPlayerController::XRotation(float AxisValue)
 {

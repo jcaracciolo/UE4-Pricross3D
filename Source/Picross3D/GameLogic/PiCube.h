@@ -17,7 +17,10 @@ public:
 
 	void SetupPuzzlePosition(const FIntVector&& SetupPosition);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PiPuzzle")
+	bool isSolution;
+
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Position", meta=(AllowPrivateAccess))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess))
 	FIntVector PuzzlePosition;
 };

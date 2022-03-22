@@ -29,6 +29,9 @@ private:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
+	void OnAction();
+	
+	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
 	void XRotation(float AxisValue);
 
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
@@ -37,12 +40,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pi Input", meta = (AllowPrivateAccess = "true"))
 	InputState CurrentState = InputState::DEFAULT;
 
-	DECLARE_DELEGATE_OneParam(SetInputStateDelegate, InputState);
+	DECLARE_DELEGATE_TwoParams(SetInputStateDelegate, InputState, bool);
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void SetInputState(InputState NewState)
-	{
-		CurrentState = NewState;
-	}
+	void ProcessStateChange(InputState NewState, bool Released = false);
 
 	//TODO can i leave this to be GC?
 	//In theory if it gets CG, i can get access to the newer one
