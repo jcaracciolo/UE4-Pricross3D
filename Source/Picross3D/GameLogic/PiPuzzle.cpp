@@ -35,6 +35,15 @@ void APiPuzzle::BeginPlay()
 			Cubes.Add(Cube);
 		}
 	});
+
+
+	for(auto Cube: Cubes)
+	{
+		FIntVector Position = Cube->GetPuzzlePosition();
+		Cube->SetXHint(GetCubesSum(EDirection::X, Position.Y, Position.Z));
+		Cube->SetYHint(GetCubesSum(EDirection::Y, Position.X, Position.Z));
+		Cube->SetZHint(GetCubesSum(EDirection::Z, Position.X, Position.Y));
+	}
 }
 
 // Called when the game starts or when spawned
@@ -69,7 +78,12 @@ void APiPuzzle::Break(APiCube* Cube)
 	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"),PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
 	if(!Cube->IsSolution() && !Cube->IsPainted())
 	{
+		Cubes.Remove(Cube);
 		Cube->Destroy();
+		GetCurrentSize(EDirection::X, Cube->GetPuzzlePosition().Y, Cube->GetPuzzlePosition().Z);
+		GetCurrentSize(EDirection::Y, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Z);
+		GetCurrentSize(EDirection::Z, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Y);
+
 	}
 }
 
@@ -92,4 +106,63 @@ bool APiPuzzle::IsCompleted()
 	}
 
 	return true;
+}
+
+int APiPuzzle::GetCurrentSize(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+{
+	int Size = 0;
+	for(auto Cube: Cubes)
+	{
+		FIntVector Position = Cube->GetPuzzlePosition();
+		int OtherAxis1Value, OtherAxis2Value;
+		switch (Axis)
+		{
+		case EDirection::X:
+			OtherAxis1Value=Position.Y, OtherAxis2Value=Position.Z;
+			break;
+		case EDirection::Y:
+			OtherAxis1Value=Position.X, OtherAxis2Value=Position.Z;
+			break;
+		case EDirection::Z:
+			OtherAxis1Value=Position.X, OtherAxis2Value=Position.Y;
+			break;
+		}
+
+		if(OtherAxis1 == OtherAxis1Value && OtherAxis2 == OtherAxis2Value && IsValid(Cube))
+		{
+			Size++;
+		}
+	}
+
+	return Size;
+}
+
+
+int APiPuzzle::GetCubesSum(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+{
+	int SolutionsOnRow = 0;
+	for(auto Cube: Cubes)
+	{
+		FIntVector Position = Cube->GetPuzzlePosition();
+		int OtherAxis1Value, OtherAxis2Value;
+		switch (Axis)
+		{
+		case EDirection::X:
+			OtherAxis1Value=Position.Y, OtherAxis2Value=Position.Z;
+			break;
+		case EDirection::Y:
+			OtherAxis1Value=Position.X, OtherAxis2Value=Position.Z;
+			break;
+		case EDirection::Z:
+			OtherAxis1Value=Position.X, OtherAxis2Value=Position.Y;
+			break;
+		}
+
+		if(OtherAxis1 == OtherAxis1Value && OtherAxis2 == OtherAxis2Value && Cube->IsSolution())
+		{
+			SolutionsOnRow++;
+		}
+	}
+
+	return SolutionsOnRow;
 }

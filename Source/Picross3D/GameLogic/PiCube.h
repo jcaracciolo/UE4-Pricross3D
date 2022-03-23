@@ -22,9 +22,18 @@ public:
 	// Should i use a reference? Or not even just a copy?
 	void SetupPuzzlePosition(const FIntVector&& SetupPosition);
 
-	UFUNCTION(BlueprintNativeEvent, Category="Cubes", meta=(BlueprintProtected))
+	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
 	void TogglePaint();
 
+	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
+	void SetXHint(int Hint);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
+	void SetYHint(int Hint);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
+	void SetZHint(int Hint);
+	
 	// TODO Why do i put UFUNCTION here?
 	// Is it ok to inline this on the Header?
 	UFUNCTION()
