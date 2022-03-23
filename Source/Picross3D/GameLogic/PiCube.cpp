@@ -10,6 +10,12 @@ APiCube::APiCube()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
+void APiCube::BeginPlay()
+{
+	Super::BeginPlay();
+	SetVisibleHints(Hints);
+}
+
 void inline APiCube::SetupPuzzlePosition(const FIntVector&& SetupPosition)
 {
 	PuzzlePosition = SetupPosition;
