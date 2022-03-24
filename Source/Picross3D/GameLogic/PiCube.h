@@ -79,7 +79,10 @@ public:
 	UFUNCTION()
 	FIntVector GetPuzzlePosition() const;
 	bool IsPainted() const;
-
+	
+	UPROPERTY(EditAnywhere, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
+	FHints Hints = {{0,EHintAmout::NONE},{0,EHintAmout::NONE},{0,EHintAmout::NONE}};
+	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	FIntVector PuzzlePosition;
@@ -90,6 +93,4 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	bool bIsPainted = false;
 
-	UPROPERTY(EditAnywhere, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
-	FHints Hints;
 };

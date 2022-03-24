@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Picross3D/GameLogic/PiPuzzle.h"
 #include "PiPlayerController.generated.h"
 
 // TODO should i define this here?
@@ -55,4 +56,9 @@ private:
 	//In theory if it gets CG, i can get access to the newer one
 	APiCamera* PiCamera;
 	bool GetPiCamera();
+
+
+	DECLARE_DELEGATE_TwoParams(ChangeVisibilityAxisDelegate, EDirection, bool);
+	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
+	void ChangeVisibilityAxis(EDirection AxisValue, bool show);
 };

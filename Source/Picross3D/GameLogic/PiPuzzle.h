@@ -15,6 +15,19 @@ enum class EDirection: uint8
 	Z
 };
 
+USTRUCT()
+struct FAxisHidden
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	EDirection Direction;
+
+	UPROPERTY()
+	uint8 Amount;
+};
+
+
 UCLASS()
 class PICROSS3D_API APiPuzzle : public AActor
 {
@@ -53,7 +66,15 @@ public:
 	int GetCurrentSize(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
 	FHint GetCubesHint(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
 	void SetLineHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
+
+	UPROPERTY()
+	FAxisHidden AxisHidden;
 	
+	UFUNCTION()
+	void HideAxis(EDirection Axis);
+
+	UFUNCTION()
+	void ShowAxis(EDirection Axis);
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true", ForceInlineRow))
 	FIntVector PuzzleSize;

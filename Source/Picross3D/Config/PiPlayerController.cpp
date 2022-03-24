@@ -43,6 +43,33 @@ void APiPlayerController::BeginPlay()
 	InputComponent->BindAction("TouchScreen", IE_Pressed, this,
 	                           &APiPlayerController::OnAction
 	);
+
+	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("HideX", IE_Released, this,
+												  &APiPlayerController::ChangeVisibilityAxis,
+												  EDirection::X, false
+	);
+
+	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("ShowX", IE_Released, this,
+											  &APiPlayerController::ChangeVisibilityAxis,
+											  EDirection::X, true
+);
+
+	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("HideY", IE_Released, this,
+											  &APiPlayerController::ChangeVisibilityAxis,
+											  EDirection::Y, false
+);
+	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("ShowY", IE_Released, this,
+											  &APiPlayerController::ChangeVisibilityAxis,
+											  EDirection::Y, true
+);
+	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("HideZ", IE_Released, this,
+											  &APiPlayerController::ChangeVisibilityAxis,
+											  EDirection::Z, false
+);
+	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("ShowZ", IE_Released, this,
+										  &APiPlayerController::ChangeVisibilityAxis,
+										  EDirection::Z, true
+);
 }
 
 void APiPlayerController::ProcessStateChange(InputState NewState, bool Released)
@@ -111,7 +138,7 @@ void APiPlayerController::OnAction()
 				if(GameMode->GetCurrentPuzzle()->IsCompleted())
 				{
 					UE_LOG(LogPiPlayerController, Error, TEXT("YOU WON!!!!"));
-					
+					GameMode->GetCurrentPuzzle()->StartCompletedAnimation();
 				}
 			}
 			else if (CurrentState == InputState::PAINTING)
@@ -140,5 +167,18 @@ void APiPlayerController::YRotation(float AxisValue)
 	if (CurrentState == InputState::MOVEMENT)
 	{
 		GameMode->GetCurrentPuzzle()->AddActorWorldRotation({AxisValue, 0, 0});
+	}
+}
+
+void APiPlayerController::ChangeVisibilityAxis(EDirection AxisValue, bool show)
+{
+	if (!GetGameMode()) { return; }
+
+	if(show)
+	{
+		GameMode->GetCurrentPuzzle()->ShowAxis(AxisValue);
+	} else
+	{
+		GameMode->GetCurrentPuzzle()->HideAxis(AxisValue);
 	}
 }

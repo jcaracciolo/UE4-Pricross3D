@@ -38,21 +38,42 @@ void APiPuzzle::BeginPlay()
 	});
 
 
-	FRandomStream stream = FRandomStream(1);
+	FRandomStream stream = FRandomStream(11);
 	for (auto Cube : Cubes)
 	{
 		FIntVector Position = Cube->GetPuzzlePosition();
-		if(Position.X == 0 && stream.FRand() < 0.4)
+		if (Cube->Hints.X.amount == EHintAmout::NONE && Cube->Hints.Y.amount == EHintAmout::NONE && Cube->Hints.Z.amount == EHintAmout::NONE)
 		{
-			SetLineHints(EDirection::X, Position.Y, Position.Z);
-		}
-		if(Position.Y == 0 && stream.FRand() < 0.2)
-		{
-			SetLineHints(EDirection::Y, Position.X, Position.Z);
-		}
-		if(Position.Z == 0 && stream.FRand() < 0.4)
-		{
-			SetLineHints(EDirection::Z, Position.X, Position.Y);
+			auto Rand = stream.FRand();
+
+				if(Rand < 0.3)
+				{
+					SetLineHints(EDirection::X, Position.Y, Position.Z);
+				} else if(Rand < 0.66)
+				{
+					SetLineHints(EDirection::Y, Position.X, Position.Z);
+				} else
+				{
+					SetLineHints(EDirection::Z, Position.X, Position.Y);
+
+				}
+
+			if(stream.FRand() < 0.3)
+			{
+				Rand = stream.FRand();
+				if(Rand < 0.6)
+				{
+					SetLineHints(EDirection::X, Position.Y, Position.Z);
+				} else if(Rand < 0.66)
+				{
+					SetLineHints(EDirection::Y, Position.X, Position.Z);
+				} else
+				{
+					SetLineHints(EDirection::Z, Position.X, Position.Y);
+
+				}
+			}
+
 		}
 	}
 }
@@ -85,23 +106,23 @@ void APiPuzzle::GenerateCubes()
 void APiPuzzle::ShowSolution()
 {
 	ForEachComponent<UChildActorComponent>(false, [this](UChildActorComponent* ChildActor)
-{
-	//TODO can i do an if like this or should i check ISValid ?
-	if (APiCube* Cube = Cast<APiCube>(ChildActor->GetChildActor()))
 	{
-		if(!Cube->IsSolution())
+		//TODO can i do an if like this or should i check ISValid ?
+		if (APiCube* Cube = Cast<APiCube>(ChildActor->GetChildActor()))
 		{
-			Cube->SetHidden(true);
-		} else
-		{
-			Cube->SetSolutionColor();
-			Cube->SetXHint({0, EHintAmout::NONE});
-			Cube->SetYHint({0, EHintAmout::NONE});
-			Cube->SetZHint({0, EHintAmout::NONE});
-
+			if (!Cube->IsSolution())
+			{
+				Cube->SetHidden(true);
+			}
+			else
+			{
+				Cube->SetSolutionColor();
+				Cube->SetXHint({0, EHintAmout::NONE});
+				Cube->SetYHint({0, EHintAmout::NONE});
+				Cube->SetZHint({0, EHintAmout::NONE});
+			}
 		}
-	}
-});
+	});
 }
 
 void APiPuzzle::Break(APiCube* Cube)
@@ -289,7 +310,81 @@ void APiPuzzle::SetLineHints(const EDirection Axis, const int OtherAxis1, const 
 	});
 }
 
-FIntVector APiPuzzle::GetPuzzleSize() const
+void APiPuzzle::HideAxis(EDirection Axis)
 {
-	return PuzzleSize;
+	UE_LOG(LogPiPuzzle, Error, TEXT("Hiding AXIS %d"), Axis);
+
+
+	if (AxisHidden.Direction != Axis)
+	{
+		AxisHidden = {Axis, 0};
+		for (auto Cube : Cubes)
+		{
+			Cube->SetActorHiddenInGame(false);
+			Cube->SetActorEnableCollision(!Cube->IsHidden());
+		}
+	}
+
+
+	uint8 SizeInSecondDirection = Axis == EDirection::Z ? PuzzleSize.Y : PuzzleSize.Z;
+	for (int i = 0; i < SizeInSecondDirection; ++i)
+	{
+		if (Axis != EDirection::Z)
+		{
+			ForEachInDirection(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
+			{
+				Cube->SetActorHiddenInGame(true);
+				Cube->SetActorEnableCollision(!Cube->IsHidden());
+			});
+		}
+		else
+		{
+			ForEachInDirection(EDirection::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
+			{
+				Cube->SetActorHiddenInGame(true);
+				Cube->SetActorEnableCollision(!Cube->IsHidden());
+			});
+		}
+	}
+
+	AxisHidden.Amount++;
+}
+
+void APiPuzzle::ShowAxis(EDirection Axis)
+{
+	UE_LOG(LogPiPuzzle, Error, TEXT("Showing AXIS %d"), Axis);
+	if (AxisHidden.Direction != Axis)
+	{
+		AxisHidden = {Axis, 0};
+		for (auto Cube : Cubes)
+		{
+			Cube->SetActorHiddenInGame(false);
+			Cube->SetActorEnableCollision(!Cube->IsHidden());
+		}
+	}
+
+	if (AxisHidden.Amount > 0)
+	{
+		AxisHidden.Amount--;
+		uint8 SizeInSecondDirection = Axis == EDirection::Z ? PuzzleSize.Y : PuzzleSize.Z;
+		for (int i = 0; i < SizeInSecondDirection; ++i)
+		{
+			if (Axis != EDirection::Z)
+			{
+				ForEachInDirection(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
+				{
+					Cube->SetActorHiddenInGame(false);
+					Cube->SetActorEnableCollision(!Cube->IsHidden());
+				});
+			}
+			else
+			{
+				ForEachInDirection(EDirection::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
+				{
+					Cube->SetActorHiddenInGame(false);
+					Cube->SetActorEnableCollision(!Cube->IsHidden());
+				});
+			}
+		}
+	}
 }
