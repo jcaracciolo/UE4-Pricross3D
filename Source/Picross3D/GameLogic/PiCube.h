@@ -67,6 +67,9 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
 	void SetZHint(FHint Hint);
+
+	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
+	void SetSolutionColor();
 	
 	// TODO Why do i put UFUNCTION here?
 	// Is it ok to inline this on the Header?

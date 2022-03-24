@@ -30,6 +30,9 @@ public:
 	UFUNCTION(CallInEditor, Category="Cubes")
 	void GenerateCubes();
 
+	UFUNCTION(CallInEditor, Category="Cubes")
+	void ShowSolution();
+	
 	//TODO Do i just pass a pointer here? will i have some issues with GC?
 	// The same cube is refereced somewhere else. but what if it isnt?
 	UFUNCTION()
@@ -41,12 +44,16 @@ public:
 	UFUNCTION()
 	bool IsCompleted();
 
+	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
+	void StartCompletedAnimation();
+
 	template<typename Func>
 	void ForEachInDirection(const EDirection Axis, const int OtherAxis1, const int OtherAxis2, Func F);
 	
 	int GetCurrentSize(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
 	FHint GetCubesHint(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
-	void FixHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
+	void SetLineHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
+	
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true", ForceInlineRow))
 	FIntVector PuzzleSize;

@@ -38,12 +38,22 @@ void APiPuzzle::BeginPlay()
 	});
 
 
+	FRandomStream stream = FRandomStream(1);
 	for (auto Cube : Cubes)
 	{
 		FIntVector Position = Cube->GetPuzzlePosition();
-		Cube->SetXHint(GetCubesHint(EDirection::X, Position.Y, Position.Z));
-		Cube->SetYHint(GetCubesHint(EDirection::Y, Position.X, Position.Z));
-		Cube->SetZHint(GetCubesHint(EDirection::Z, Position.X, Position.Y));
+		if(Position.X == 0 && stream.FRand() < 0.4)
+		{
+			SetLineHints(EDirection::X, Position.Y, Position.Z);
+		}
+		if(Position.Y == 0 && stream.FRand() < 0.2)
+		{
+			SetLineHints(EDirection::Y, Position.X, Position.Z);
+		}
+		if(Position.Z == 0 && stream.FRand() < 0.4)
+		{
+			SetLineHints(EDirection::Z, Position.X, Position.Y);
+		}
 	}
 }
 
@@ -70,6 +80,28 @@ void APiPuzzle::GenerateCubes()
 			}
 		}
 	}
+}
+
+void APiPuzzle::ShowSolution()
+{
+	ForEachComponent<UChildActorComponent>(false, [this](UChildActorComponent* ChildActor)
+{
+	//TODO can i do an if like this or should i check ISValid ?
+	if (APiCube* Cube = Cast<APiCube>(ChildActor->GetChildActor()))
+	{
+		if(!Cube->IsSolution())
+		{
+			Cube->SetHidden(true);
+		} else
+		{
+			Cube->SetSolutionColor();
+			Cube->SetXHint({0, EHintAmout::NONE});
+			Cube->SetYHint({0, EHintAmout::NONE});
+			Cube->SetZHint({0, EHintAmout::NONE});
+
+		}
+	}
+});
 }
 
 void APiPuzzle::Break(APiCube* Cube)
@@ -105,6 +137,14 @@ bool APiPuzzle::IsCompleted()
 	}
 
 	return true;
+}
+
+void APiPuzzle::StartCompletedAnimation_Implementation()
+{
+	for (auto Cube : Cubes)
+	{
+		Cube->SetSolutionColor();
+	}
 }
 
 template <typename Func>
@@ -153,7 +193,7 @@ int APiPuzzle::GetCurrentSize(const EDirection Axis, const int OtherAxis1, const
 FHint APiPuzzle::GetCubesHint(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
 {
 	int Solutions[20];
-	int Index=0;
+	int Index = 0;
 	ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this, &Solutions, &Index, Axis](const APiCube* Cube)
 	{
 		if (IsValid(Cube) && Cube->IsSolution())
@@ -176,15 +216,15 @@ FHint APiPuzzle::GetCubesHint(const EDirection Axis, const int OtherAxis1, const
 		}
 	});
 
-	int Max=-1, Min=MAX_int8;
-	
+	int Max = -1, Min = MAX_int8;
+
 	for (int i = 0; i < Index; ++i)
 	{
-		if(Solutions[i] > Max)
+		if (Solutions[i] > Max)
 		{
 			Max = Solutions[i];
 		}
-		if(Solutions[i] < Min)
+		if (Solutions[i] < Min)
 		{
 			Min = Solutions[i];
 		}
@@ -197,43 +237,59 @@ FHint APiPuzzle::GetCubesHint(const EDirection Axis, const int OtherAxis1, const
 		bool bFound = false;
 		for (int j = 0; j < Index; ++j)
 		{
-				if(Solutions[j] == i)
-				{
-					bFound = true;
-					break;
-				}		
+			if (Solutions[j] == i)
+			{
+				bFound = true;
+				break;
+			}
 		}
-		if(!bFound && !inSpace)
+		if (!bFound && !inSpace)
 		{
 			inSpace = true;
 			Spaces++;
-		} else if(bFound)
+		}
+		else if (bFound)
 		{
 			inSpace = false;
 		}
 	}
 
-	if(Spaces == 0)
+	if (Spaces == 0)
 	{
-		return { Index, EHintAmout::ONCE};
+		return {Index, EHintAmout::ONCE};
 	}
-	if(Spaces == 1)
+	if (Spaces == 1)
 	{
-		return { Index, EHintAmout::TWICE};
+		return {Index, EHintAmout::TWICE};
 	}
 
-	return { Index, EHintAmout::MANY};
+	return {Index, EHintAmout::MANY};
 }
 
-void APiPuzzle::FixHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+void APiPuzzle::SetLineHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
 {
-	// ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this](APiCube* Cube)
-	// {
-	// 	if (IsValid(Cube))
-	// 	{
-	// 		Cube->SetVisibleHints(Cube->Hi)
-	// 	}
-	// });
-	//
-	// return SolutionsOnRow;
+	FHint Hint{GetCubesHint(Axis, OtherAxis1, OtherAxis2)};
+	ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this, Axis, Hint](APiCube* Cube)
+	{
+		if (IsValid(Cube))
+		{
+			switch (Axis)
+			{
+			case EDirection::X:
+				Cube->SetXHint(Hint);
+				break;
+			case EDirection::Y:
+				Cube->SetYHint(Hint);
+				break;
+			case EDirection::Z:
+				Cube->SetZHint(Hint);
+				break;
+			}
+		}
+	});
+}
+
+FIntVector APiPuzzle::GetPuzzleSize() const
+{
+	return PuzzleSize;
 }
