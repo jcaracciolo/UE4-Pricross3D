@@ -6,15 +6,36 @@
 #include "GameFramework/Actor.h"
 #include "PiCube.generated.h"
 
-UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
-enum class EHints: uint8
+UENUM(BlueprintType)
+enum class EHintAmout: uint8
 {
-	NONE = 0 UMETA(Hidden),
-	X = 1 << 0,
-	Y = 1 << 1,
-	Z = 1 << 2
+	NONE=0,
+	ONCE,
+	TWICE,
+	MANY,
 };
-ENUM_CLASS_FLAGS(EHints);
+
+USTRUCT(BlueprintType)
+struct FHint
+{
+	GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly)
+	int number;
+	
+	UPROPERTY(BlueprintReadOnly)
+	EHintAmout amount;
+};
+
+USTRUCT(BlueprintType)
+struct FHints
+{
+	GENERATED_BODY()
+
+	FHint X;
+	FHint Y;
+	FHint Z;
+};
 
 class APiPuzzle;
 UCLASS()
@@ -38,17 +59,14 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
 	void TogglePaint();
 
-	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
-	void SetXHint(int Hint);
+	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
+	void SetXHint(FHint Hint);
 
-	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
-	void SetYHint(int Hint);
+	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
+	void SetYHint(FHint Hint);
 
-	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
-	void SetZHint(int Hint);
-
-	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
-	void SetVisibleHints(UPARAM(meta = (Bitmask, BitmaskEnum = EHints))int32 NewHints);
+	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
+	void SetZHint(FHint Hint);
 	
 	// TODO Why do i put UFUNCTION here?
 	// Is it ok to inline this on the Header?
@@ -69,6 +87,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	bool bIsPainted = false;
 
-	UPROPERTY(EditAnywhere, Category="PiPuzzle", meta=(AllowPrivateAccess = "true", Bitmask, BitmaskEnum = EHints))
-	uint32 Hints;
+	UPROPERTY(EditAnywhere, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
+	FHints Hints;
 };

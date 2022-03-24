@@ -21,14 +21,15 @@ void APiPuzzle::BeginPlay()
 	Super::BeginPlay();
 
 	auto Pawn = Cast<APiCamera>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	if(!IsValid(Pawn))
+	if (!IsValid(Pawn))
 	{
 		UE_LOG(LogPiPuzzle, Error, TEXT("Pawn failed to be casted to APiCamera"));
 		return;
 	}
 	Pawn->SetupPuzzleSize(PuzzleSize.GetMax());
 
-	ForEachComponent<UChildActorComponent>(false, [this] (UChildActorComponent* ChildActor){
+	ForEachComponent<UChildActorComponent>(false, [this](UChildActorComponent* ChildActor)
+	{
 		//TODO can i do an if like this or should i check ISValid ?
 		if (APiCube* Cube = Cast<APiCube>(ChildActor->GetChildActor()))
 		{
@@ -37,19 +38,19 @@ void APiPuzzle::BeginPlay()
 	});
 
 
-	for(auto Cube: Cubes)
+	for (auto Cube : Cubes)
 	{
 		FIntVector Position = Cube->GetPuzzlePosition();
-		Cube->SetXHint(GetCubesSum(EDirection::X, Position.Y, Position.Z));
-		Cube->SetYHint(GetCubesSum(EDirection::Y, Position.X, Position.Z));
-		Cube->SetZHint(GetCubesSum(EDirection::Z, Position.X, Position.Y));
+		Cube->SetXHint(GetCubesHint(EDirection::X, Position.Y, Position.Z));
+		Cube->SetYHint(GetCubesHint(EDirection::Y, Position.X, Position.Z));
+		Cube->SetZHint(GetCubesHint(EDirection::Z, Position.X, Position.Y));
 	}
 }
 
 // Called when the game starts or when spawned
 void APiPuzzle::GenerateCubes()
 {
-	UE_LOG(LogPiPuzzle, Log, TEXT("Creating Cubes for %d,%d,%d"),PuzzleSize.X, PuzzleSize.Y, PuzzleSize.Z);
+	UE_LOG(LogPiPuzzle, Log, TEXT("Creating Cubes for %d,%d,%d"), PuzzleSize.X, PuzzleSize.Y, PuzzleSize.Z);
 
 	for (auto i = 0; i < PuzzleSize.X; i++)
 	{
@@ -62,11 +63,10 @@ void APiPuzzle::GenerateCubes()
 				Cube->SetupPuzzlePosition({i, j, k});
 				Cube->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 				Cube->SetActorRelativeLocation({
-					100*(i - PuzzleSize.X / 2.0f + 0.5f),
-					100*(j - PuzzleSize.Y / 2.0f + 0.5f),
-					100*(k - PuzzleSize.Z / 2.0f + 0.5f)
+					100 * (i - PuzzleSize.X / 2.0f + 0.5f),
+					100 * (j - PuzzleSize.Y / 2.0f + 0.5f),
+					100 * (k - PuzzleSize.Z / 2.0f + 0.5f)
 				});
-				
 			}
 		}
 	}
@@ -75,15 +75,14 @@ void APiPuzzle::GenerateCubes()
 void APiPuzzle::Break(APiCube* Cube)
 {
 	FIntVector PuzzlePosition = Cube->GetPuzzlePosition();
-	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"),PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
-	if(!Cube->IsSolution() && !Cube->IsPainted())
+	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"), PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
+	if (!Cube->IsSolution() && !Cube->IsPainted())
 	{
 		Cubes.Remove(Cube);
 		Cube->Destroy();
 		GetCurrentSize(EDirection::X, Cube->GetPuzzlePosition().Y, Cube->GetPuzzlePosition().Z);
 		GetCurrentSize(EDirection::Y, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Z);
 		GetCurrentSize(EDirection::Z, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Y);
-
 	}
 }
 
@@ -94,12 +93,12 @@ void APiPuzzle::Paint(APiCube* Cube)
 
 bool APiPuzzle::IsCompleted()
 {
-	for(auto Cube: Cubes)
+	for (auto Cube : Cubes)
 	{
 		FIntVector PuzzlePosition = Cube->GetPuzzlePosition();
-		UE_LOG(LogPiPuzzle, Log, TEXT("Checking Cube %d,%d,%d"),PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
+		UE_LOG(LogPiPuzzle, Log, TEXT("Checking Cube %d,%d,%d"), PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
 
-		if(IsValid(Cube) && !Cube->IsSolution())
+		if (IsValid(Cube) && !Cube->IsSolution())
 		{
 			return false;
 		}
@@ -108,61 +107,133 @@ bool APiPuzzle::IsCompleted()
 	return true;
 }
 
-int APiPuzzle::GetCurrentSize(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+template <typename Func>
+void APiPuzzle::ForEachInDirection(const EDirection Axis, const int OtherAxis1, const int OtherAxis2, Func F)
 {
-	int Size = 0;
-	for(auto Cube: Cubes)
+	for (auto Cube : Cubes)
 	{
 		FIntVector Position = Cube->GetPuzzlePosition();
 		int OtherAxis1Value, OtherAxis2Value;
 		switch (Axis)
 		{
 		case EDirection::X:
-			OtherAxis1Value=Position.Y, OtherAxis2Value=Position.Z;
+			OtherAxis1Value = Position.Y, OtherAxis2Value = Position.Z;
 			break;
 		case EDirection::Y:
-			OtherAxis1Value=Position.X, OtherAxis2Value=Position.Z;
+			OtherAxis1Value = Position.X, OtherAxis2Value = Position.Z;
 			break;
 		case EDirection::Z:
-			OtherAxis1Value=Position.X, OtherAxis2Value=Position.Y;
+			OtherAxis1Value = Position.X, OtherAxis2Value = Position.Y;
 			break;
 		}
 
-		if(OtherAxis1 == OtherAxis1Value && OtherAxis2 == OtherAxis2Value && IsValid(Cube))
+		if (OtherAxis1 == OtherAxis1Value && OtherAxis2 == OtherAxis2Value)
+		{
+			F(Cube);
+		}
+	}
+}
+
+
+int APiPuzzle::GetCurrentSize(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+{
+	int Size = 0;
+	ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this, &Size](const APiCube* Cube)
+	{
+		if (IsValid(Cube))
 		{
 			Size++;
 		}
-	}
+	});
 
 	return Size;
 }
 
 
-int APiPuzzle::GetCubesSum(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+FHint APiPuzzle::GetCubesHint(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
 {
-	int SolutionsOnRow = 0;
-	for(auto Cube: Cubes)
+	int Solutions[20];
+	int Index=0;
+	ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this, &Solutions, &Index, Axis](const APiCube* Cube)
 	{
-		FIntVector Position = Cube->GetPuzzlePosition();
-		int OtherAxis1Value, OtherAxis2Value;
-		switch (Axis)
+		if (IsValid(Cube) && Cube->IsSolution())
 		{
-		case EDirection::X:
-			OtherAxis1Value=Position.Y, OtherAxis2Value=Position.Z;
-			break;
-		case EDirection::Y:
-			OtherAxis1Value=Position.X, OtherAxis2Value=Position.Z;
-			break;
-		case EDirection::Z:
-			OtherAxis1Value=Position.X, OtherAxis2Value=Position.Y;
-			break;
+			switch (Axis)
+			{
+			case EDirection::X:
+				Solutions[Index] = Cube->GetPuzzlePosition().X;
+				Index++;
+				break;
+			case EDirection::Y:
+				Solutions[Index] = Cube->GetPuzzlePosition().Y;
+				Index++;
+				break;
+			case EDirection::Z:
+				Solutions[Index] = Cube->GetPuzzlePosition().Z;
+				Index++;
+				break;
+			};
 		}
+	});
 
-		if(OtherAxis1 == OtherAxis1Value && OtherAxis2 == OtherAxis2Value && Cube->IsSolution())
+	int Max=-1, Min=MAX_int8;
+	
+	for (int i = 0; i < Index; ++i)
+	{
+		if(Solutions[i] > Max)
 		{
-			SolutionsOnRow++;
+			Max = Solutions[i];
+		}
+		if(Solutions[i] < Min)
+		{
+			Min = Solutions[i];
 		}
 	}
 
-	return SolutionsOnRow;
+	int Spaces = 0;
+	bool inSpace = false;
+	for (int i = Min; i < Max; ++i)
+	{
+		bool bFound = false;
+		for (int j = 0; j < Index; ++j)
+		{
+				if(Solutions[j] == i)
+				{
+					bFound = true;
+					break;
+				}		
+		}
+		if(!bFound && !inSpace)
+		{
+			inSpace = true;
+			Spaces++;
+		} else if(bFound)
+		{
+			inSpace = false;
+		}
+	}
+
+	if(Spaces == 0)
+	{
+		return { Index, EHintAmout::ONCE};
+	}
+	if(Spaces == 1)
+	{
+		return { Index, EHintAmout::TWICE};
+	}
+
+	return { Index, EHintAmout::MANY};
+}
+
+void APiPuzzle::FixHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+{
+	// ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this](APiCube* Cube)
+	// {
+	// 	if (IsValid(Cube))
+	// 	{
+	// 		Cube->SetVisibleHints(Cube->Hi)
+	// 	}
+	// });
+	//
+	// return SolutionsOnRow;
 }

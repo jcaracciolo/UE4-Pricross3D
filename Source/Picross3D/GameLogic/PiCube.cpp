@@ -13,12 +13,29 @@ APiCube::APiCube()
 void APiCube::BeginPlay()
 {
 	Super::BeginPlay();
-	SetVisibleHints(Hints);
+	SetXHint(Hints.X);
+	SetYHint(Hints.Y);
+	SetZHint(Hints.Z);
 }
 
 void inline APiCube::SetupPuzzlePosition(const FIntVector&& SetupPosition)
 {
 	PuzzlePosition = SetupPosition;
+}
+
+void APiCube::SetXHint_Implementation(FHint Hint)
+{
+	Hints.X = Hint;
+}
+
+void APiCube::SetYHint_Implementation(FHint Hint)
+{
+	Hints.Y = Hint;
+}
+
+void APiCube::SetZHint_Implementation(FHint Hint)
+{
+	Hints.Z = Hint;
 }
 
 void APiCube::TogglePaint_Implementation()

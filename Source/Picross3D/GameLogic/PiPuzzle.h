@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PiCube.h"
 #include "GameFramework/Actor.h"
 #include "PiPuzzle.generated.h"
-
-class APiCube;
 
 UENUM()
 enum class EDirection: uint8
@@ -42,12 +41,12 @@ public:
 	UFUNCTION()
 	bool IsCompleted();
 
-	UFUNCTION()
+	template<typename Func>
+	void ForEachInDirection(const EDirection Axis, const int OtherAxis1, const int OtherAxis2, Func F);
+	
 	int GetCurrentSize(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
-
-	UFUNCTION()
-	int GetCubesSum(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
-
+	FHint GetCubesHint(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
+	void FixHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true", ForceInlineRow))
 	FIntVector PuzzleSize;
