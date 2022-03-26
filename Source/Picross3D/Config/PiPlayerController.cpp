@@ -14,77 +14,81 @@ void APiPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InputComponent->BindAxis("XRotation", this, &APiPlayerController::XRotation);
-	InputComponent->BindAxis("YRotation", this, &APiPlayerController::YRotation);
+	InputComponent->BindAxis("XRotation", this, &APiPlayerController::RotateXAxis);
+	InputComponent->BindAxis("YRotation", this, &APiPlayerController::RotateYAxis);
+	
 	InputComponent->BindAction<SetInputStateDelegate>("TouchScreen", IE_Pressed, this,
-	                                                  &APiPlayerController::ProcessStateChange,
-	                                                  InputState::MOVEMENT, false
+	                                                  &APiPlayerController::InputStateChange,
+	                                                  EInputState::MOVEMENT, false
 	);
 	InputComponent->BindAction<SetInputStateDelegate>("TouchScreen", IE_Released, this,
-	                                                  &APiPlayerController::ProcessStateChange,
-	                                                  InputState::MOVEMENT, true
+	                                                  &APiPlayerController::InputStateChange,
+	                                                  EInputState::MOVEMENT, true
 	);
 	InputComponent->BindAction<SetInputStateDelegate>("BreakToggle", IE_Pressed, this,
-	                                                  &APiPlayerController::ProcessStateChange,
-	                                                  InputState::BREAKING, false
+	                                                  &APiPlayerController::InputStateChange,
+	                                                  EInputState::BREAKING, false
 	);
 	InputComponent->BindAction<SetInputStateDelegate>("BreakToggle", IE_Released, this,
-	                                                  &APiPlayerController::ProcessStateChange,
-	                                                  InputState::BREAKING, true
+	                                                  &APiPlayerController::InputStateChange,
+	                                                  EInputState::BREAKING, true
 	);
 	InputComponent->BindAction<SetInputStateDelegate>("PaintToggle", IE_Pressed, this,
-	                                                  &APiPlayerController::ProcessStateChange,
-	                                                  InputState::PAINTING, false
+	                                                  &APiPlayerController::InputStateChange,
+	                                                  EInputState::PAINTING, false
 	);
 	InputComponent->BindAction<SetInputStateDelegate>("PaintToggle", IE_Released, this,
-	                                                  &APiPlayerController::ProcessStateChange,
-	                                                  InputState::PAINTING, true
+	                                                  &APiPlayerController::InputStateChange,
+	                                                  EInputState::PAINTING, true
 	);
 	InputComponent->BindAction("TouchScreen", IE_Pressed, this,
-	                           &APiPlayerController::OnAction
+	                           &APiPlayerController::OnScreenAction
 	);
 
 	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("HideX", IE_Released, this,
-												  &APiPlayerController::ChangeVisibilityAxis,
-												  EDirection::X, false
+	                                                         &APiPlayerController::ChangeAxisVisibility,
+	                                                         EPiAxis::X, false
 	);
 
 	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("ShowX", IE_Released, this,
-											  &APiPlayerController::ChangeVisibilityAxis,
-											  EDirection::X, true
-);
+	                                                         &APiPlayerController::ChangeAxisVisibility,
+	                                                         EPiAxis::X, true
+	);
 
 	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("HideY", IE_Released, this,
-											  &APiPlayerController::ChangeVisibilityAxis,
-											  EDirection::Y, false
-);
+	                                                         &APiPlayerController::ChangeAxisVisibility,
+	                                                         EPiAxis::Y, false
+	);
 	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("ShowY", IE_Released, this,
-											  &APiPlayerController::ChangeVisibilityAxis,
-											  EDirection::Y, true
-);
+	                                                         &APiPlayerController::ChangeAxisVisibility,
+	                                                         EPiAxis::Y, true
+	);
 	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("HideZ", IE_Released, this,
-											  &APiPlayerController::ChangeVisibilityAxis,
-											  EDirection::Z, false
-);
+	                                                         &APiPlayerController::ChangeAxisVisibility,
+	                                                         EPiAxis::Z, false
+	);
 	InputComponent->BindAction<ChangeVisibilityAxisDelegate>("ShowZ", IE_Released, this,
-										  &APiPlayerController::ChangeVisibilityAxis,
-										  EDirection::Z, true
-);
+	                                                         &APiPlayerController::ChangeAxisVisibility,
+	                                                         EPiAxis::Z, true
+	);
 }
 
-void APiPlayerController::ProcessStateChange(InputState NewState, bool Released)
+void APiPlayerController::InputStateChange(EInputState NewState, bool Released)
 {
 	switch (CurrentState)
 	{
-	case InputState::MOVEMENT:
-		CurrentState = NewState == InputState::MOVEMENT && Released ? InputState::MOVEMENT : NewState;
+	case EInputState::MOVEMENT:
+		CurrentState = NewState == EInputState::MOVEMENT && Released ? EInputState::MOVEMENT : NewState;
 		break;
-	case InputState::BREAKING:
-		CurrentState = NewState == InputState::BREAKING && Released ? InputState::MOVEMENT : InputState::BREAKING;
+	case EInputState::BREAKING:
+		CurrentState = NewState == EInputState::BREAKING && Released ? EInputState::MOVEMENT : EInputState::BREAKING;
 		break;
-	case InputState::PAINTING:
-		CurrentState = NewState == InputState::PAINTING && Released ? InputState::MOVEMENT : InputState::PAINTING;
+	case EInputState::PAINTING:
+		CurrentState = NewState == EInputState::PAINTING && Released ? EInputState::MOVEMENT : EInputState::PAINTING;
 		break;
+	default:
+		//TODO This should not be this way, but input is kind of a mess right now
+		CurrentState = NewState;
 	}
 }
 
@@ -117,7 +121,7 @@ bool APiPlayerController::GetPiCamera()
 	return true;
 }
 
-void APiPlayerController::OnAction()
+void APiPlayerController::OnScreenAction()
 {
 	if (!GetGameMode() || !GetPiCamera()) { return; }
 
@@ -126,22 +130,22 @@ void APiPlayerController::OnAction()
 	{
 		//TODO is this how you cast out of a Hit?
 		auto Cube = Cast<APiCube>(OutHit.GetActor());
- 
+
 		//TODO here IsValid is not required because Cube would be null (that's how GetActor works
 		// since it has a WeakPtr inside). Just null check then?
 		if (IsValid(Cube))
 		{
-			if (CurrentState == InputState::BREAKING)
+			if (CurrentState == EInputState::BREAKING)
 			{
 				GameMode->GetCurrentPuzzle()->Break(Cube);
 
-				if(GameMode->GetCurrentPuzzle()->IsCompleted())
+				if (GameMode->GetCurrentPuzzle()->IsCompleted())
 				{
 					UE_LOG(LogPiPlayerController, Error, TEXT("YOU WON!!!!"));
 					GameMode->GetCurrentPuzzle()->StartCompletedAnimation();
 				}
 			}
-			else if (CurrentState == InputState::PAINTING)
+			else if (CurrentState == EInputState::PAINTING)
 			{
 				GameMode->GetCurrentPuzzle()->Paint(Cube);
 			}
@@ -150,34 +154,35 @@ void APiPlayerController::OnAction()
 }
 
 
-void APiPlayerController::XRotation(float AxisValue)
+void APiPlayerController::RotateXAxis(float AxisValue)
 {
 	if (!GetGameMode()) { return; }
 
-	if (CurrentState == InputState::MOVEMENT)
+	if (CurrentState == EInputState::MOVEMENT)
 	{
 		GameMode->GetCurrentPuzzle()->AddActorLocalRotation({0, AxisValue, 0});
 	}
 }
 
-void APiPlayerController::YRotation(float AxisValue)
+void APiPlayerController::RotateYAxis(float AxisValue)
 {
 	if (!GetGameMode()) { return; }
 
-	if (CurrentState == InputState::MOVEMENT)
+	if (CurrentState == EInputState::MOVEMENT)
 	{
 		GameMode->GetCurrentPuzzle()->AddActorWorldRotation({AxisValue, 0, 0});
 	}
 }
 
-void APiPlayerController::ChangeVisibilityAxis(EDirection AxisValue, bool show)
+void APiPlayerController::ChangeAxisVisibility(EPiAxis AxisValue, bool show)
 {
 	if (!GetGameMode()) { return; }
 
-	if(show)
+	if (show)
 	{
 		GameMode->GetCurrentPuzzle()->ShowAxis(AxisValue);
-	} else
+	}
+	else
 	{
 		GameMode->GetCurrentPuzzle()->HideAxis(AxisValue);
 	}

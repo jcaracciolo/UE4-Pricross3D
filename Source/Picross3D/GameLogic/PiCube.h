@@ -7,9 +7,10 @@
 #include "PiCube.generated.h"
 
 UENUM(BlueprintType)
-enum class EHintAmout: uint8
+enum class EHintAppearance: uint8
 {
 	NONE=0,
+	// Indicates no hint should be given
 	ONCE,
 	TWICE,
 	MANY,
@@ -20,11 +21,11 @@ struct FHint
 {
 	GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadOnly)
-	int number;
-	
 	UPROPERTY(BlueprintReadOnly)
-	EHintAmout amount;
+	uint8 Number;
+
+	UPROPERTY(BlueprintReadOnly)
+	EHintAppearance Appearance;
 };
 
 USTRUCT(BlueprintType)
@@ -49,7 +50,7 @@ public:
 
 	UFUNCTION()
 	void BeginPlay() override;
-	
+
 	// TODO Do i need to declare all functions as UFUNCTIONS() ? Even if i am not using them
 	//as delegates or in a blueprint
 	// Is it ok if i force this to be an R-Value? Sounds weird
@@ -70,20 +71,16 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
 	void SetSolutionColor();
-	
-	// TODO Why do i put UFUNCTION here?
-	// Is it ok to inline this on the Header?
-	UFUNCTION()
-	bool IsSolution() const;
 
-	UFUNCTION()
-	FIntVector GetPuzzlePosition() const;
-	bool IsPainted() const;
-	
+	FIntVector GetPuzzlePosition() const { return PuzzlePosition; };
+	bool IsSolution() const { return bIsSolution; };
+	bool IsPainted() const { return bIsPainted; };
+
 	UPROPERTY(EditAnywhere, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
-	FHints Hints = {{0,EHintAmout::NONE},{0,EHintAmout::NONE},{0,EHintAmout::NONE}};
-	
+	FHints Hints{{0, EHintAppearance::NONE}, {0, EHintAppearance::NONE}, {0, EHintAppearance::NONE}};
+
 private:
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	FIntVector PuzzlePosition;
 
@@ -92,5 +89,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	bool bIsPainted = false;
-
 };

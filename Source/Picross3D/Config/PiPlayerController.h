@@ -4,15 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Picross3D/GameLogic/PiPuzzle.h"
+#include "Picross3D/Utils/Definitions.h"
 #include "PiPlayerController.generated.h"
 
 // TODO should i define this here?
 UENUM()
-enum class InputState: uint8
+enum class EInputState: uint8
 {
-	//TODO deleted an emun here and mapping in UE is weird now
-	MOVEMENT = 1,
+	DEFAULT = 0,
+	MOVEMENT,
 	BREAKING,
 	PAINTING,
 };
@@ -31,20 +31,20 @@ private:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void OnAction();
+	void OnScreenAction();
 	
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void XRotation(float AxisValue);
+	void RotateXAxis(float AxisValue);
 
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void YRotation(float AxisValue);
+	void RotateYAxis(float AxisValue);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pi Input", meta = (AllowPrivateAccess = "true"))
-	InputState CurrentState = InputState::MOVEMENT;
+	EInputState CurrentState = EInputState::MOVEMENT;
 
-	DECLARE_DELEGATE_TwoParams(SetInputStateDelegate, InputState, bool);
+	DECLARE_DELEGATE_TwoParams(SetInputStateDelegate, EInputState, bool);
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void ProcessStateChange(InputState NewState, bool Released = false);
+	void InputStateChange(EInputState NewState, bool Released = false);
 
 	//TODO can i leave this to be GC?
 	//In theory if it gets CG, i can get access to the newer one
@@ -56,9 +56,8 @@ private:
 	//In theory if it gets CG, i can get access to the newer one
 	APiCamera* PiCamera;
 	bool GetPiCamera();
-
-
-	DECLARE_DELEGATE_TwoParams(ChangeVisibilityAxisDelegate, EDirection, bool);
+	
+	DECLARE_DELEGATE_TwoParams(ChangeVisibilityAxisDelegate, EPiAxis, bool);
 	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void ChangeVisibilityAxis(EDirection AxisValue, bool show);
+	void ChangeAxisVisibility(EPiAxis Axis, bool show);
 };

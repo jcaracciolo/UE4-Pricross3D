@@ -18,6 +18,7 @@ class PICROSS3D_API APiGameMode : public AGameModeBase
 
 	public:
 		virtual void BeginPlay() override;
+		APiPuzzle* GetCurrentPuzzle() const { return CurrentPuzzle; };
 		
 	private:
 		//TODO is this the correct way to reference an Asset?
@@ -27,9 +28,4 @@ class PICROSS3D_API APiGameMode : public AGameModeBase
 		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Puzzle", meta=(AllowPrivateAccess = "true"))
 		APiPuzzle* CurrentPuzzle;
 
-	public:
-		APiPuzzle* GetCurrentPuzzle() const
-		{
-			return CurrentPuzzle;
-		}
 };

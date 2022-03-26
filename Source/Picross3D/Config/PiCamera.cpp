@@ -13,7 +13,7 @@ APiCamera::APiCamera()
 	Camera->SetupAttachment(RootComponent);
 }
 
-void APiCamera::SetupPuzzleSize(int Cubes) const
+void APiCamera::FitPuzzleInViewport(int Cubes) const
 {
 	Camera->SetRelativeLocation({Cubes * 160.0f, 0, 0});
 }

@@ -26,7 +26,7 @@ void APiPuzzle::BeginPlay()
 		UE_LOG(LogPiPuzzle, Error, TEXT("Pawn failed to be casted to APiCamera"));
 		return;
 	}
-	Pawn->SetupPuzzleSize(PuzzleSize.GetMax());
+	Pawn->FitPuzzleInViewport(PuzzleSize.GetMax());
 
 	ForEachComponent<UChildActorComponent>(false, [this](UChildActorComponent* ChildActor)
 	{
@@ -42,19 +42,19 @@ void APiPuzzle::BeginPlay()
 	for (auto Cube : Cubes)
 	{
 		FIntVector Position = Cube->GetPuzzlePosition();
-		if (Cube->Hints.X.amount == EHintAmout::NONE && Cube->Hints.Y.amount == EHintAmout::NONE && Cube->Hints.Z.amount == EHintAmout::NONE)
+		if (Cube->Hints.X.Appearance == EHintAppearance::NONE && Cube->Hints.Y.Appearance == EHintAppearance::NONE && Cube->Hints.Z.Appearance == EHintAppearance::NONE)
 		{
 			auto Rand = stream.FRand();
 
 				if(Rand < 0.3)
 				{
-					SetLineHints(EDirection::X, Position.Y, Position.Z);
+					SetLineHints(EPiAxis::X, Position.Y, Position.Z);
 				} else if(Rand < 0.66)
 				{
-					SetLineHints(EDirection::Y, Position.X, Position.Z);
+					SetLineHints(EPiAxis::Y, Position.X, Position.Z);
 				} else
 				{
-					SetLineHints(EDirection::Z, Position.X, Position.Y);
+					SetLineHints(EPiAxis::Z, Position.X, Position.Y);
 
 				}
 
@@ -63,13 +63,13 @@ void APiPuzzle::BeginPlay()
 				Rand = stream.FRand();
 				if(Rand < 0.6)
 				{
-					SetLineHints(EDirection::X, Position.Y, Position.Z);
+					SetLineHints(EPiAxis::X, Position.Y, Position.Z);
 				} else if(Rand < 0.66)
 				{
-					SetLineHints(EDirection::Y, Position.X, Position.Z);
+					SetLineHints(EPiAxis::Y, Position.X, Position.Z);
 				} else
 				{
-					SetLineHints(EDirection::Z, Position.X, Position.Y);
+					SetLineHints(EPiAxis::Z, Position.X, Position.Y);
 
 				}
 			}
@@ -117,9 +117,9 @@ void APiPuzzle::ShowSolution()
 			else
 			{
 				Cube->SetSolutionColor();
-				Cube->SetXHint({0, EHintAmout::NONE});
-				Cube->SetYHint({0, EHintAmout::NONE});
-				Cube->SetZHint({0, EHintAmout::NONE});
+				Cube->SetXHint({0, EHintAppearance::NONE});
+				Cube->SetYHint({0, EHintAppearance::NONE});
+				Cube->SetZHint({0, EHintAppearance::NONE});
 			}
 		}
 	});
@@ -133,9 +133,9 @@ void APiPuzzle::Break(APiCube* Cube)
 	{
 		Cubes.Remove(Cube);
 		Cube->Destroy();
-		GetCurrentSize(EDirection::X, Cube->GetPuzzlePosition().Y, Cube->GetPuzzlePosition().Z);
-		GetCurrentSize(EDirection::Y, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Z);
-		GetCurrentSize(EDirection::Z, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Y);
+		GetCurrentSize(EPiAxis::X, Cube->GetPuzzlePosition().Y, Cube->GetPuzzlePosition().Z);
+		GetCurrentSize(EPiAxis::Y, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Z);
+		GetCurrentSize(EPiAxis::Z, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Y);
 	}
 }
 
@@ -169,7 +169,7 @@ void APiPuzzle::StartCompletedAnimation_Implementation()
 }
 
 template <typename Func>
-void APiPuzzle::ForEachInDirection(const EDirection Axis, const int OtherAxis1, const int OtherAxis2, Func F)
+void APiPuzzle::ForEachInAxis(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2, Func F)
 {
 	for (auto Cube : Cubes)
 	{
@@ -177,13 +177,13 @@ void APiPuzzle::ForEachInDirection(const EDirection Axis, const int OtherAxis1, 
 		int OtherAxis1Value, OtherAxis2Value;
 		switch (Axis)
 		{
-		case EDirection::X:
+		case EPiAxis::X:
 			OtherAxis1Value = Position.Y, OtherAxis2Value = Position.Z;
 			break;
-		case EDirection::Y:
+		case EPiAxis::Y:
 			OtherAxis1Value = Position.X, OtherAxis2Value = Position.Z;
 			break;
-		case EDirection::Z:
+		case EPiAxis::Z:
 			OtherAxis1Value = Position.X, OtherAxis2Value = Position.Y;
 			break;
 		}
@@ -196,10 +196,10 @@ void APiPuzzle::ForEachInDirection(const EDirection Axis, const int OtherAxis1, 
 }
 
 
-int APiPuzzle::GetCurrentSize(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+int APiPuzzle::GetCurrentSize(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2)
 {
 	int Size = 0;
-	ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this, &Size](const APiCube* Cube)
+	ForEachInAxis(Axis, OtherAxis1, OtherAxis2, [this, &Size](const APiCube* Cube)
 	{
 		if (IsValid(Cube))
 		{
@@ -211,25 +211,25 @@ int APiPuzzle::GetCurrentSize(const EDirection Axis, const int OtherAxis1, const
 }
 
 
-FHint APiPuzzle::GetCubesHint(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+FHint APiPuzzle::GetCubesHint(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2)
 {
 	int Solutions[20];
-	int Index = 0;
-	ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this, &Solutions, &Index, Axis](const APiCube* Cube)
+	uint8 Index = 0;
+	ForEachInAxis(Axis, OtherAxis1, OtherAxis2, [this, &Solutions, &Index, Axis](const APiCube* Cube)
 	{
 		if (IsValid(Cube) && Cube->IsSolution())
 		{
 			switch (Axis)
 			{
-			case EDirection::X:
+			case EPiAxis::X:
 				Solutions[Index] = Cube->GetPuzzlePosition().X;
 				Index++;
 				break;
-			case EDirection::Y:
+			case EPiAxis::Y:
 				Solutions[Index] = Cube->GetPuzzlePosition().Y;
 				Index++;
 				break;
-			case EDirection::Z:
+			case EPiAxis::Z:
 				Solutions[Index] = Cube->GetPuzzlePosition().Z;
 				Index++;
 				break;
@@ -277,32 +277,32 @@ FHint APiPuzzle::GetCubesHint(const EDirection Axis, const int OtherAxis1, const
 
 	if (Spaces == 0)
 	{
-		return {Index, EHintAmout::ONCE};
+		return {Index, EHintAppearance::ONCE};
 	}
 	if (Spaces == 1)
 	{
-		return {Index, EHintAmout::TWICE};
+		return {Index, EHintAppearance::TWICE};
 	}
 
-	return {Index, EHintAmout::MANY};
+	return {Index, EHintAppearance::MANY};
 }
 
-void APiPuzzle::SetLineHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2)
+void APiPuzzle::SetLineHints(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2)
 {
 	FHint Hint{GetCubesHint(Axis, OtherAxis1, OtherAxis2)};
-	ForEachInDirection(Axis, OtherAxis1, OtherAxis2, [this, Axis, Hint](APiCube* Cube)
+	ForEachInAxis(Axis, OtherAxis1, OtherAxis2, [this, Axis, Hint](APiCube* Cube)
 	{
 		if (IsValid(Cube))
 		{
 			switch (Axis)
 			{
-			case EDirection::X:
+			case EPiAxis::X:
 				Cube->SetXHint(Hint);
 				break;
-			case EDirection::Y:
+			case EPiAxis::Y:
 				Cube->SetYHint(Hint);
 				break;
-			case EDirection::Z:
+			case EPiAxis::Z:
 				Cube->SetZHint(Hint);
 				break;
 			}
@@ -310,12 +310,12 @@ void APiPuzzle::SetLineHints(const EDirection Axis, const int OtherAxis1, const 
 	});
 }
 
-void APiPuzzle::HideAxis(EDirection Axis)
+void APiPuzzle::HideAxis(EPiAxis Axis)
 {
 	UE_LOG(LogPiPuzzle, Error, TEXT("Hiding AXIS %d"), Axis);
 
 
-	if (AxisHidden.Direction != Axis)
+	if (AxisHidden.Axis != Axis)
 	{
 		AxisHidden = {Axis, 0};
 		for (auto Cube : Cubes)
@@ -326,12 +326,12 @@ void APiPuzzle::HideAxis(EDirection Axis)
 	}
 
 
-	uint8 SizeInSecondDirection = Axis == EDirection::Z ? PuzzleSize.Y : PuzzleSize.Z;
-	for (int i = 0; i < SizeInSecondDirection; ++i)
+	uint8 SizeInSecondAxis = Axis == EPiAxis::Z ? PuzzleSize.Y : PuzzleSize.Z;
+	for (int i = 0; i < SizeInSecondAxis; ++i)
 	{
-		if (Axis != EDirection::Z)
+		if (Axis != EPiAxis::Z)
 		{
-			ForEachInDirection(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
+			ForEachInAxis(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
 			{
 				Cube->SetActorHiddenInGame(true);
 				Cube->SetActorEnableCollision(!Cube->IsHidden());
@@ -339,7 +339,7 @@ void APiPuzzle::HideAxis(EDirection Axis)
 		}
 		else
 		{
-			ForEachInDirection(EDirection::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
+			ForEachInAxis(EPiAxis::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
 			{
 				Cube->SetActorHiddenInGame(true);
 				Cube->SetActorEnableCollision(!Cube->IsHidden());
@@ -350,10 +350,10 @@ void APiPuzzle::HideAxis(EDirection Axis)
 	AxisHidden.Amount++;
 }
 
-void APiPuzzle::ShowAxis(EDirection Axis)
+void APiPuzzle::ShowAxis(EPiAxis Axis)
 {
 	UE_LOG(LogPiPuzzle, Error, TEXT("Showing AXIS %d"), Axis);
-	if (AxisHidden.Direction != Axis)
+	if (AxisHidden.Axis != Axis)
 	{
 		AxisHidden = {Axis, 0};
 		for (auto Cube : Cubes)
@@ -366,12 +366,12 @@ void APiPuzzle::ShowAxis(EDirection Axis)
 	if (AxisHidden.Amount > 0)
 	{
 		AxisHidden.Amount--;
-		uint8 SizeInSecondDirection = Axis == EDirection::Z ? PuzzleSize.Y : PuzzleSize.Z;
-		for (int i = 0; i < SizeInSecondDirection; ++i)
+		uint8 SizeInSecondAxis = Axis == EPiAxis::Z ? PuzzleSize.Y : PuzzleSize.Z;
+		for (int i = 0; i < SizeInSecondAxis; ++i)
 		{
-			if (Axis != EDirection::Z)
+			if (Axis != EPiAxis::Z)
 			{
-				ForEachInDirection(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
+				ForEachInAxis(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
 				{
 					Cube->SetActorHiddenInGame(false);
 					Cube->SetActorEnableCollision(!Cube->IsHidden());
@@ -379,7 +379,7 @@ void APiPuzzle::ShowAxis(EDirection Axis)
 			}
 			else
 			{
-				ForEachInDirection(EDirection::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
+				ForEachInAxis(EPiAxis::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
 				{
 					Cube->SetActorHiddenInGame(false);
 					Cube->SetActorEnableCollision(!Cube->IsHidden());

@@ -16,7 +16,7 @@ public:
 	// Sets default values for this pawn's properties
 	APiCamera();
 
-	void SetupPuzzleSize(int Cubes) const;
+	void FitPuzzleInViewport(int Cubes) const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PiCamera", meta=(AllowPrivateAccess = "true"))

@@ -5,23 +5,16 @@
 #include "CoreMinimal.h"
 #include "PiCube.h"
 #include "GameFramework/Actor.h"
+#include "Picross3D/Utils/Definitions.h"
 #include "PiPuzzle.generated.h"
 
-UENUM()
-enum class EDirection: uint8
-{
-	X = 0,
-	Y,
-	Z
-};
-
 USTRUCT()
-struct FAxisHidden
+struct FCurrentHiddenAxis
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	EDirection Direction;
+	EPiAxis Axis;
 
 	UPROPERTY()
 	uint8 Amount;
@@ -61,20 +54,20 @@ public:
 	void StartCompletedAnimation();
 
 	template<typename Func>
-	void ForEachInDirection(const EDirection Axis, const int OtherAxis1, const int OtherAxis2, Func F);
+	void ForEachInAxis(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2, Func F);
 	
-	int GetCurrentSize(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
-	FHint GetCubesHint(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
-	void SetLineHints(const EDirection Axis, const int OtherAxis1, const int OtherAxis2);
+	int GetCurrentSize(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2);
+	FHint GetCubesHint(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2);
+	void SetLineHints(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2);
 
 	UPROPERTY()
-	FAxisHidden AxisHidden;
+	FCurrentHiddenAxis AxisHidden;
 	
 	UFUNCTION()
-	void HideAxis(EDirection Axis);
+	void HideAxis(EPiAxis Axis);
 
 	UFUNCTION()
-	void ShowAxis(EDirection Axis);
+	void ShowAxis(EPiAxis Axis);
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Cubes", meta=(AllowPrivateAccess="true", ForceInlineRow))
 	FIntVector PuzzleSize;
