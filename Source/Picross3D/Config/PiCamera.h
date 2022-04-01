@@ -13,7 +13,6 @@ class PICROSS3D_API APiCamera : public APawn
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
 	APiCamera();
 
 	void FitPuzzleInViewport(int Cubes) const;

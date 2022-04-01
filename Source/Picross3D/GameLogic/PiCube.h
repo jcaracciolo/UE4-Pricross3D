@@ -9,8 +9,8 @@
 UENUM(BlueprintType)
 enum class EHintAppearance: uint8
 {
-	NONE=0,
 	// Indicates no hint should be given
+	NONE=0,
 	ONCE,
 	TWICE,
 	MANY,
@@ -51,8 +51,7 @@ public:
 	UFUNCTION()
 	void BeginPlay() override;
 
-	// TODO Do i need to declare all functions as UFUNCTIONS() ? Even if i am not using them
-	//as delegates or in a blueprint
+	// TODO
 	// Is it ok if i force this to be an R-Value? Sounds weird
 	// Should i use a reference? Or not even just a copy?
 	void SetupPuzzlePosition(const FIntVector&& SetupPosition);
@@ -71,15 +70,15 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
 	void SetSolutionColor();
-
+	
 	FIntVector GetPuzzlePosition() const { return PuzzlePosition; };
+	FHints GetHints() const { return Hints; };
 	bool IsSolution() const { return bIsSolution; };
 	bool IsPainted() const { return bIsPainted; };
 
-	UPROPERTY(EditAnywhere, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
-	FHints Hints{{0, EHintAppearance::NONE}, {0, EHintAppearance::NONE}, {0, EHintAppearance::NONE}};
-
 private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
+	FHints Hints{{0, EHintAppearance::NONE}, {0, EHintAppearance::NONE}, {0, EHintAppearance::NONE}};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	FIntVector PuzzlePosition;

@@ -33,47 +33,51 @@ void APiPuzzle::BeginPlay()
 		//TODO can i do an if like this or should i check ISValid ?
 		if (APiCube* Cube = Cast<APiCube>(ChildActor->GetChildActor()))
 		{
-			Cubes.Add(Cube);
+			CubesArray.Add(Cube);
 		}
 	});
 
+	CubesMatrix.SetupMatrix(PuzzleSize.X, PuzzleSize.Y, PuzzleSize.Z);
+
 
 	FRandomStream stream = FRandomStream(11);
-	for (auto Cube : Cubes)
+	for (auto Cube : CubesArray)
 	{
 		FIntVector Position = Cube->GetPuzzlePosition();
-		if (Cube->Hints.X.Appearance == EHintAppearance::NONE && Cube->Hints.Y.Appearance == EHintAppearance::NONE && Cube->Hints.Z.Appearance == EHintAppearance::NONE)
+		if (Cube->GetHints().X.Appearance == EHintAppearance::NONE && Cube->GetHints().Y.Appearance ==
+			EHintAppearance::NONE && Cube->GetHints().Z.Appearance == EHintAppearance::NONE)
 		{
 			auto Rand = stream.FRand();
 
-				if(Rand < 0.3)
-				{
-					SetLineHints(EPiAxis::X, Position.Y, Position.Z);
-				} else if(Rand < 0.66)
-				{
-					SetLineHints(EPiAxis::Y, Position.X, Position.Z);
-				} else
-				{
-					SetLineHints(EPiAxis::Z, Position.X, Position.Y);
-
-				}
-
-			if(stream.FRand() < 0.3)
+			if (Rand < 0.3)
 			{
-				Rand = stream.FRand();
-				if(Rand < 0.6)
-				{
-					SetLineHints(EPiAxis::X, Position.Y, Position.Z);
-				} else if(Rand < 0.66)
-				{
-					SetLineHints(EPiAxis::Y, Position.X, Position.Z);
-				} else
-				{
-					SetLineHints(EPiAxis::Z, Position.X, Position.Y);
-
-				}
+				SetLineHints(EPiAxis::X, Position.Y, Position.Z);
+			}
+			else if (Rand < 0.66)
+			{
+				SetLineHints(EPiAxis::Y, Position.X, Position.Z);
+			}
+			else
+			{
+				SetLineHints(EPiAxis::Z, Position.X, Position.Y);
 			}
 
+			if (stream.FRand() < 0.3)
+			{
+				Rand = stream.FRand();
+				if (Rand < 0.6)
+				{
+					SetLineHints(EPiAxis::X, Position.Y, Position.Z);
+				}
+				else if (Rand < 0.66)
+				{
+					SetLineHints(EPiAxis::Y, Position.X, Position.Z);
+				}
+				else
+				{
+					SetLineHints(EPiAxis::Z, Position.X, Position.Y);
+				}
+			}
 		}
 	}
 }
@@ -131,7 +135,7 @@ void APiPuzzle::Break(APiCube* Cube)
 	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"), PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
 	if (!Cube->IsSolution() && !Cube->IsPainted())
 	{
-		Cubes.Remove(Cube);
+		CubesArray.Remove(Cube);
 		Cube->Destroy();
 		GetCurrentSize(EPiAxis::X, Cube->GetPuzzlePosition().Y, Cube->GetPuzzlePosition().Z);
 		GetCurrentSize(EPiAxis::Y, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Z);
@@ -146,7 +150,7 @@ void APiPuzzle::Paint(APiCube* Cube)
 
 bool APiPuzzle::IsCompleted()
 {
-	for (auto Cube : Cubes)
+	for (auto Cube : CubesArray)
 	{
 		FIntVector PuzzlePosition = Cube->GetPuzzlePosition();
 		UE_LOG(LogPiPuzzle, Log, TEXT("Checking Cube %d,%d,%d"), PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
@@ -162,7 +166,7 @@ bool APiPuzzle::IsCompleted()
 
 void APiPuzzle::StartCompletedAnimation_Implementation()
 {
-	for (auto Cube : Cubes)
+	for (auto Cube : CubesArray)
 	{
 		Cube->SetSolutionColor();
 	}
@@ -171,10 +175,10 @@ void APiPuzzle::StartCompletedAnimation_Implementation()
 template <typename Func>
 void APiPuzzle::ForEachInAxis(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2, Func F)
 {
-	for (auto Cube : Cubes)
+	for (auto Cube : CubesArray)
 	{
 		FIntVector Position = Cube->GetPuzzlePosition();
-		int OtherAxis1Value, OtherAxis2Value;
+		int OtherAxis1Value = 0, OtherAxis2Value = 0;
 		switch (Axis)
 		{
 		case EPiAxis::X:
@@ -318,7 +322,7 @@ void APiPuzzle::HideAxis(EPiAxis Axis)
 	if (AxisHidden.Axis != Axis)
 	{
 		AxisHidden = {Axis, 0};
-		for (auto Cube : Cubes)
+		for (auto Cube : CubesArray)
 		{
 			Cube->SetActorHiddenInGame(false);
 			Cube->SetActorEnableCollision(!Cube->IsHidden());
@@ -356,7 +360,7 @@ void APiPuzzle::ShowAxis(EPiAxis Axis)
 	if (AxisHidden.Axis != Axis)
 	{
 		AxisHidden = {Axis, 0};
-		for (auto Cube : Cubes)
+		for (auto Cube : CubesArray)
 		{
 			Cube->SetActorHiddenInGame(false);
 			Cube->SetActorEnableCollision(!Cube->IsHidden());

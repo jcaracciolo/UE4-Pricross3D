@@ -78,7 +78,7 @@ void APiPlayerController::InputStateChange(EInputState NewState, bool Released)
 	switch (CurrentState)
 	{
 	case EInputState::MOVEMENT:
-		CurrentState = NewState == EInputState::MOVEMENT && Released ? EInputState::MOVEMENT : NewState;
+		CurrentState = !Released ? NewState : EInputState::MOVEMENT;
 		break;
 	case EInputState::BREAKING:
 		CurrentState = NewState == EInputState::BREAKING && Released ? EInputState::MOVEMENT : EInputState::BREAKING;
@@ -86,9 +86,6 @@ void APiPlayerController::InputStateChange(EInputState NewState, bool Released)
 	case EInputState::PAINTING:
 		CurrentState = NewState == EInputState::PAINTING && Released ? EInputState::MOVEMENT : EInputState::PAINTING;
 		break;
-	default:
-		//TODO This should not be this way, but input is kind of a mess right now
-		CurrentState = NewState;
 	}
 }
 
@@ -141,7 +138,6 @@ void APiPlayerController::OnScreenAction()
 
 				if (GameMode->GetCurrentPuzzle()->IsCompleted())
 				{
-					UE_LOG(LogPiPlayerController, Error, TEXT("YOU WON!!!!"));
 					GameMode->GetCurrentPuzzle()->StartCompletedAnimation();
 				}
 			}

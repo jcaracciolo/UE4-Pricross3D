@@ -6,6 +6,7 @@
 #include "PiCube.h"
 #include "GameFramework/Actor.h"
 #include "Picross3D/Utils/Definitions.h"
+#include "Picross3D/Utils/FPuzzleMatrix.h"
 #include "PiPuzzle.generated.h"
 
 USTRUCT()
@@ -76,5 +77,6 @@ private:
 	TSubclassOf<APiCube> CubeClass;
 
 	UPROPERTY()
-	TArray<APiCube*> Cubes;
+	TArray<APiCube*> CubesArray;
+	FPuzzleMatrix CubesMatrix{&CubesArray};
 };

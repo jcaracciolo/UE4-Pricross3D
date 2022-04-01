@@ -11,8 +11,7 @@
 UENUM()
 enum class EInputState: uint8
 {
-	DEFAULT = 0,
-	MOVEMENT,
+	MOVEMENT = 1,
 	BREAKING,
 	PAINTING,
 };
@@ -27,25 +26,10 @@ class PICROSS3D_API APiPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-private:
-	virtual void BeginPlay() override;
-
-	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void OnScreenAction();
-	
-	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void RotateXAxis(float AxisValue);
-
-	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void RotateYAxis(float AxisValue);
-
+protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Pi Input", meta = (AllowPrivateAccess = "true"))
 	EInputState CurrentState = EInputState::MOVEMENT;
-
-	DECLARE_DELEGATE_TwoParams(SetInputStateDelegate, EInputState, bool);
-	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
-	void InputStateChange(EInputState NewState, bool Released = false);
-
+	
 	//TODO can i leave this to be GC?
 	//In theory if it gets CG, i can get access to the newer one
 	// Or should i say UPROPERTY() with TWeakObjectPtr
@@ -57,7 +41,15 @@ private:
 	APiCamera* PiCamera;
 	bool GetPiCamera();
 	
+	virtual void BeginPlay() override;
+	
+	void OnScreenAction();
+	void RotateXAxis(float AxisValue);
+	void RotateYAxis(float AxisValue);
+	
+	DECLARE_DELEGATE_TwoParams(SetInputStateDelegate, EInputState, bool);
+	void InputStateChange(EInputState NewState, bool Released = false);
+
 	DECLARE_DELEGATE_TwoParams(ChangeVisibilityAxisDelegate, EPiAxis, bool);
-	UFUNCTION(BlueprintCallable, Category="Pi Input", meta=(BlueprintProtected))
 	void ChangeAxisVisibility(EPiAxis Axis, bool show);
 };
