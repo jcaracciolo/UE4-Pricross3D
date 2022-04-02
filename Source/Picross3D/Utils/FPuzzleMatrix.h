@@ -119,7 +119,6 @@ FPuzzleMatrix::TMatrixIterator<T>& FPuzzleMatrix::TMatrixIterator<T>::operator++
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("ITERATOR DONE"));
 		bIsEndIterator = true;
 	}
 

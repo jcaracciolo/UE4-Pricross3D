@@ -54,7 +54,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
 	void StartCompletedAnimation();
 	
-	void ForEachInAxis(const FIntVector From, const EPiAxis Axis, TFunction<void(APiCube* Cube)> F) const;
 	int GetCurrentSize(const FIntVector From, const EPiAxis Axis) const;
 	FHint GetCubesHint(const FIntVector From, const EPiAxis Axis) const;
 	void SetLineHints(const FIntVector From, const EPiAxis Axis) const;

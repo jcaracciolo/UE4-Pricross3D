@@ -39,44 +39,25 @@ void APiPuzzle::BeginPlay()
 	CubesMatrix.SetupMatrix(PuzzleSize.X, PuzzleSize.Y, PuzzleSize.Z);
 
 
-	FRandomStream stream = FRandomStream(11);
-	for (auto Cube : CubesArray)
+	for (int Y = 0; Y < PuzzleSize.Y; ++Y)
 	{
-		FIntVector Position = Cube->GetPuzzlePosition();
-		if (Cube->GetHints().X.Appearance == EHintAppearance::NONE && Cube->GetHints().Y.Appearance ==
-			EHintAppearance::NONE && Cube->GetHints().Z.Appearance == EHintAppearance::NONE)
+		for (int Z = 0; Z < PuzzleSize.Z; ++Z)
 		{
-			auto Rand = stream.FRand();
-
-			if (Rand < 0.3)
-			{
-				SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::X);
-			}
-			else if (Rand < 0.66)
-			{
-				SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::Y);
-			}
-			else
-			{
-				SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::Z);
-			}
-
-			if (stream.FRand() < 0.3)
-			{
-				Rand = stream.FRand();
-				if (Rand < 0.6)
-				{
-					SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::X);
-				}
-				else if (Rand < 0.66)
-				{
-					SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::Y);
-				}
-				else
-				{
-					SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::Z);
-				}
-			}
+			SetLineHints({0, Y, Z}, EPiAxis::X);
+		}
+	}
+	for (int X = 0; X < PuzzleSize.X; ++X)
+	{
+		for (int Z = 0; Z < PuzzleSize.Z; ++Z)
+		{
+			SetLineHints({X, 0, Z}, EPiAxis::Y);
+		}
+	}
+	for (int X = 0; X < PuzzleSize.X; ++X)
+	{
+		for (int Y = 0; Y < PuzzleSize.Y; ++Y)
+		{
+			SetLineHints({X, Y, 0}, EPiAxis::Z);
 		}
 	}
 }
@@ -97,9 +78,7 @@ void APiPuzzle::GenerateCubes()
 				Cube->SetupPuzzlePosition({i, j, k});
 				Cube->AttachToActor(this, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 				Cube->SetActorRelativeLocation({
-					100 * (i - PuzzleSize.X / 2.0f + 0.5f),
-					100 * (j - PuzzleSize.Y / 2.0f + 0.5f),
-					100 * (k - PuzzleSize.Z / 2.0f + 0.5f)
+					100 * (i - PuzzleSize.X / 2.0f + 0.5f), 100 * (j - PuzzleSize.Y / 2.0f + 0.5f), 100 * (k - PuzzleSize.Z / 2.0f + 0.5f)
 				});
 			}
 		}
@@ -120,9 +99,6 @@ void APiPuzzle::ShowSolution()
 			else
 			{
 				Cube->SetSolutionColor();
-				Cube->SetXHint({0, EHintAppearance::NONE});
-				Cube->SetYHint({0, EHintAppearance::NONE});
-				Cube->SetZHint({0, EHintAppearance::NONE});
 			}
 		}
 	});
@@ -134,7 +110,7 @@ void APiPuzzle::Break(APiCube* Cube)
 	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"), PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
 	if (!Cube->IsSolution() && !Cube->IsPainted())
 	{
-		CubesArray.Remove(Cube);
+		CubesArray[CubesArray.IndexOfByKey(Cube)] = nullptr;
 		Cube->Destroy();
 		// GetCurrentSize(Cube, EPiAxis::X);
 		// GetCurrentSize(Cube, EPiAxis::Y);
@@ -172,28 +148,17 @@ void APiPuzzle::StartCompletedAnimation_Implementation()
 }
 
 
-//TODO at some point create a way of doing this with constIterator
-void APiPuzzle::ForEachInAxis(const FIntVector From, const EPiAxis Axis, const TFunction<void(APiCube* Cube)> F) const
-{
-
-	for (auto It = CubesMatrix.begin(From, Axis);  It != CubesMatrix.end(); ++It)
-	{
-		APiCube* Cube = *It;
-		UE_LOG(LogPiPuzzle, Log, TEXT("Iterating Cube %d,%d,%d"), Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Y, Cube->GetPuzzlePosition().Z);
-		F(Cube);
-	}
-}
-
 int APiPuzzle::GetCurrentSize(const FIntVector From, const EPiAxis Axis) const
 {
 	int Size = 0;
-	ForEachInAxis(From, Axis, [this, &Size](APiCube* Cube)
+	for (auto It = CubesMatrix.cbegin(From, Axis); It != CubesMatrix.cend(); ++It)
 	{
+		const APiCube* Cube = *It;
 		if (IsValid(Cube))
 		{
 			Size++;
 		}
-	});
+	}
 
 	return Size;
 }
@@ -201,85 +166,49 @@ int APiPuzzle::GetCurrentSize(const FIntVector From, const EPiAxis Axis) const
 
 FHint APiPuzzle::GetCubesHint(const FIntVector From, const EPiAxis Axis) const
 {
-	int Solutions[20];
-	uint8 Index = 0;
-	ForEachInAxis(From, Axis, [this, &Solutions, &Index, Axis](APiCube* Cube)
+	int Spaces = -1; // Starting at -1 because outside of the cube is space
+	bool bInSpace = true;
+
+	uint8 Solutions = 0;
+	for (auto It = CubesMatrix.cbegin(From, Axis); It != CubesMatrix.cend(); ++It)
 	{
-		if (IsValid(Cube) && Cube->IsSolution())
+		const APiCube* Cube = *It;
+		if (IsValid(Cube))
 		{
-			switch (Axis)
+			if (Cube->IsSolution())
 			{
-			case EPiAxis::X:
-				Solutions[Index] = Cube->GetPuzzlePosition().X;
-				Index++;
-				break;
-			case EPiAxis::Y:
-				Solutions[Index] = Cube->GetPuzzlePosition().Y;
-				Index++;
-				break;
-			case EPiAxis::Z:
-				Solutions[Index] = Cube->GetPuzzlePosition().Z;
-				Index++;
-				break;
-			};
-		}
-	});
-
-	int Max = -1, Min = MAX_int8;
-
-	for (int i = 0; i < Index; ++i)
-	{
-		if (Solutions[i] > Max)
-		{
-			Max = Solutions[i];
-		}
-		if (Solutions[i] < Min)
-		{
-			Min = Solutions[i];
-		}
-	}
-
-	int Spaces = 0;
-	bool inSpace = false;
-	for (int i = Min; i < Max; ++i)
-	{
-		bool bFound = false;
-		for (int j = 0; j < Index; ++j)
-		{
-			if (Solutions[j] == i)
+				Solutions++;
+				if (bInSpace)
+				{
+					bInSpace = false;
+					Spaces++;
+				}
+			}
+			else
 			{
-				bFound = true;
-				break;
+				bInSpace = true;
 			}
 		}
-		if (!bFound && !inSpace)
-		{
-			inSpace = true;
-			Spaces++;
-		}
-		else if (bFound)
-		{
-			inSpace = false;
-		}
 	}
 
-	if (Spaces == 0)
+	if (Spaces == 0 || Spaces == -1)
 	{
-		return {Index, EHintAppearance::ONCE};
+		return {Solutions, EHintAppearance::ONCE};
 	}
 	if (Spaces == 1)
 	{
-		return {Index, EHintAppearance::TWICE};
+		return {Solutions, EHintAppearance::TWICE};
 	}
 
-	return {Index, EHintAppearance::MANY};
+	return {Solutions, EHintAppearance::MANY};
 }
 
 void APiPuzzle::SetLineHints(const FIntVector From, const EPiAxis Axis) const
 {
 	FHint Hint{GetCubesHint(From, Axis)};
-	ForEachInAxis(From, Axis, [this, Axis, Hint](APiCube* Cube)
+	for (auto It = CubesMatrix.begin(From, Axis); It != CubesMatrix.end(); ++It)
 	{
+		APiCube* Cube = *It;
 		if (IsValid(Cube))
 		{
 			switch (Axis)
@@ -295,7 +224,7 @@ void APiPuzzle::SetLineHints(const FIntVector From, const EPiAxis Axis) const
 				break;
 			}
 		}
-	});
+	}
 }
 
 void APiPuzzle::HideAxis(EPiAxis Axis)
