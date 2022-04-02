@@ -23,6 +23,19 @@ void inline APiCube::SetupPuzzlePosition(const FIntVector&& SetupPosition)
 	PuzzlePosition = SetupPosition;
 }
 
+uint32 inline APiCube::GetPuzzlePosition(EPiAxis Axis) const
+{
+	switch (Axis)
+	{
+		case EPiAxis::X: return PuzzlePosition.X;
+		case EPiAxis::Y: return PuzzlePosition.Y;
+		case EPiAxis::Z: return PuzzlePosition.Z;
+	}
+
+	check(0);
+	return 0;
+}
+
 void APiCube::SetXHint_Implementation(FHint Hint)
 {
 	Hints.X = Hint;

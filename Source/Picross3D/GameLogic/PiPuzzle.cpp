@@ -2,7 +2,6 @@
 
 
 #include "PiPuzzle.h"
-
 #include "PiCube.h"
 #include "Picross3D/Config/PiCamera.h"
 #include "Picross3D/Config/PiGameMode.h"
@@ -51,15 +50,15 @@ void APiPuzzle::BeginPlay()
 
 			if (Rand < 0.3)
 			{
-				SetLineHints(EPiAxis::X, Position.Y, Position.Z);
+				SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::X);
 			}
 			else if (Rand < 0.66)
 			{
-				SetLineHints(EPiAxis::Y, Position.X, Position.Z);
+				SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::Y);
 			}
 			else
 			{
-				SetLineHints(EPiAxis::Z, Position.X, Position.Y);
+				SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::Z);
 			}
 
 			if (stream.FRand() < 0.3)
@@ -67,15 +66,15 @@ void APiPuzzle::BeginPlay()
 				Rand = stream.FRand();
 				if (Rand < 0.6)
 				{
-					SetLineHints(EPiAxis::X, Position.Y, Position.Z);
+					SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::X);
 				}
 				else if (Rand < 0.66)
 				{
-					SetLineHints(EPiAxis::Y, Position.X, Position.Z);
+					SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::Y);
 				}
 				else
 				{
-					SetLineHints(EPiAxis::Z, Position.X, Position.Y);
+					SetLineHints(Cube->GetPuzzlePosition(), EPiAxis::Z);
 				}
 			}
 		}
@@ -137,9 +136,9 @@ void APiPuzzle::Break(APiCube* Cube)
 	{
 		CubesArray.Remove(Cube);
 		Cube->Destroy();
-		GetCurrentSize(EPiAxis::X, Cube->GetPuzzlePosition().Y, Cube->GetPuzzlePosition().Z);
-		GetCurrentSize(EPiAxis::Y, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Z);
-		GetCurrentSize(EPiAxis::Z, Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Y);
+		// GetCurrentSize(Cube, EPiAxis::X);
+		// GetCurrentSize(Cube, EPiAxis::Y);
+		// GetCurrentSize(Cube, EPiAxis::Z);
 	}
 }
 
@@ -172,38 +171,23 @@ void APiPuzzle::StartCompletedAnimation_Implementation()
 	}
 }
 
-template <typename Func>
-void APiPuzzle::ForEachInAxis(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2, Func F)
-{
-	for (auto Cube : CubesArray)
-	{
-		FIntVector Position = Cube->GetPuzzlePosition();
-		int OtherAxis1Value = 0, OtherAxis2Value = 0;
-		switch (Axis)
-		{
-		case EPiAxis::X:
-			OtherAxis1Value = Position.Y, OtherAxis2Value = Position.Z;
-			break;
-		case EPiAxis::Y:
-			OtherAxis1Value = Position.X, OtherAxis2Value = Position.Z;
-			break;
-		case EPiAxis::Z:
-			OtherAxis1Value = Position.X, OtherAxis2Value = Position.Y;
-			break;
-		}
 
-		if (OtherAxis1 == OtherAxis1Value && OtherAxis2 == OtherAxis2Value)
-		{
-			F(Cube);
-		}
+//TODO at some point create a way of doing this with constIterator
+void APiPuzzle::ForEachInAxis(const FIntVector From, const EPiAxis Axis, const TFunction<void(APiCube* Cube)> F) const
+{
+
+	for (auto It = CubesMatrix.begin(From, Axis);  It != CubesMatrix.end(); ++It)
+	{
+		APiCube* Cube = *It;
+		UE_LOG(LogPiPuzzle, Log, TEXT("Iterating Cube %d,%d,%d"), Cube->GetPuzzlePosition().X, Cube->GetPuzzlePosition().Y, Cube->GetPuzzlePosition().Z);
+		F(Cube);
 	}
 }
 
-
-int APiPuzzle::GetCurrentSize(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2)
+int APiPuzzle::GetCurrentSize(const FIntVector From, const EPiAxis Axis) const
 {
 	int Size = 0;
-	ForEachInAxis(Axis, OtherAxis1, OtherAxis2, [this, &Size](const APiCube* Cube)
+	ForEachInAxis(From, Axis, [this, &Size](APiCube* Cube)
 	{
 		if (IsValid(Cube))
 		{
@@ -215,11 +199,11 @@ int APiPuzzle::GetCurrentSize(const EPiAxis Axis, const int OtherAxis1, const in
 }
 
 
-FHint APiPuzzle::GetCubesHint(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2)
+FHint APiPuzzle::GetCubesHint(const FIntVector From, const EPiAxis Axis) const
 {
 	int Solutions[20];
 	uint8 Index = 0;
-	ForEachInAxis(Axis, OtherAxis1, OtherAxis2, [this, &Solutions, &Index, Axis](const APiCube* Cube)
+	ForEachInAxis(From, Axis, [this, &Solutions, &Index, Axis](APiCube* Cube)
 	{
 		if (IsValid(Cube) && Cube->IsSolution())
 		{
@@ -291,10 +275,10 @@ FHint APiPuzzle::GetCubesHint(const EPiAxis Axis, const int OtherAxis1, const in
 	return {Index, EHintAppearance::MANY};
 }
 
-void APiPuzzle::SetLineHints(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2)
+void APiPuzzle::SetLineHints(const FIntVector From, const EPiAxis Axis) const
 {
-	FHint Hint{GetCubesHint(Axis, OtherAxis1, OtherAxis2)};
-	ForEachInAxis(Axis, OtherAxis1, OtherAxis2, [this, Axis, Hint](APiCube* Cube)
+	FHint Hint{GetCubesHint(From, Axis)};
+	ForEachInAxis(From, Axis, [this, Axis, Hint](APiCube* Cube)
 	{
 		if (IsValid(Cube))
 		{
@@ -330,26 +314,26 @@ void APiPuzzle::HideAxis(EPiAxis Axis)
 	}
 
 
-	uint8 SizeInSecondAxis = Axis == EPiAxis::Z ? PuzzleSize.Y : PuzzleSize.Z;
-	for (int i = 0; i < SizeInSecondAxis; ++i)
-	{
-		if (Axis != EPiAxis::Z)
-		{
-			ForEachInAxis(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
-			{
-				Cube->SetActorHiddenInGame(true);
-				Cube->SetActorEnableCollision(!Cube->IsHidden());
-			});
-		}
-		else
-		{
-			ForEachInAxis(EPiAxis::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
-			{
-				Cube->SetActorHiddenInGame(true);
-				Cube->SetActorEnableCollision(!Cube->IsHidden());
-			});
-		}
-	}
+	// uint8 SizeInSecondAxis = Axis == EPiAxis::Z ? PuzzleSize.Y : PuzzleSize.Z;
+	// for (int i = 0; i < SizeInSecondAxis; ++i)
+	// {
+	// 	if (Axis != EPiAxis::Z)
+	// 	{
+	// 		ForEachInAxis(CubesMatrix.GeAxis, AxisHidden.Amount, i, [this](APiCube* Cube)
+	// 		{
+	// 			Cube->SetActorHiddenInGame(true);
+	// 			Cube->SetActorEnableCollision(!Cube->IsHidden());
+	// 		});
+	// 	}
+	// 	else
+	// 	{
+	// 		ForEachInAxis(EPiAxis::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
+	// 		{
+	// 			Cube->SetActorHiddenInGame(true);
+	// 			Cube->SetActorEnableCollision(!Cube->IsHidden());
+	// 		});
+	// 	}
+	// }
 
 	AxisHidden.Amount++;
 }
@@ -367,28 +351,28 @@ void APiPuzzle::ShowAxis(EPiAxis Axis)
 		}
 	}
 
-	if (AxisHidden.Amount > 0)
-	{
-		AxisHidden.Amount--;
-		uint8 SizeInSecondAxis = Axis == EPiAxis::Z ? PuzzleSize.Y : PuzzleSize.Z;
-		for (int i = 0; i < SizeInSecondAxis; ++i)
-		{
-			if (Axis != EPiAxis::Z)
-			{
-				ForEachInAxis(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
-				{
-					Cube->SetActorHiddenInGame(false);
-					Cube->SetActorEnableCollision(!Cube->IsHidden());
-				});
-			}
-			else
-			{
-				ForEachInAxis(EPiAxis::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
-				{
-					Cube->SetActorHiddenInGame(false);
-					Cube->SetActorEnableCollision(!Cube->IsHidden());
-				});
-			}
-		}
-	}
+	// if (AxisHidden.Amount > 0)
+	// {
+	// 	AxisHidden.Amount--;
+	// 	uint8 SizeInSecondAxis = Axis == EPiAxis::Z ? PuzzleSize.Y : PuzzleSize.Z;
+	// 	for (int i = 0; i < SizeInSecondAxis; ++i)
+	// 	{
+	// 		if (Axis != EPiAxis::Z)
+	// 		{
+	// 			ForEachInAxis(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
+	// 			{
+	// 				Cube->SetActorHiddenInGame(false);
+	// 				Cube->SetActorEnableCollision(!Cube->IsHidden());
+	// 			});
+	// 		}
+	// 		else
+	// 		{
+	// 			ForEachInAxis(EPiAxis::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
+	// 			{
+	// 				Cube->SetActorHiddenInGame(false);
+	// 				Cube->SetActorEnableCollision(!Cube->IsHidden());
+	// 			});
+	// 		}
+	// 	}
+	// }
 }

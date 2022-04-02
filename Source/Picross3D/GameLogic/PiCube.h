@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Picross3D/Utils/Definitions.h"
 #include "PiCube.generated.h"
 
 UENUM(BlueprintType)
@@ -72,6 +73,7 @@ public:
 	void SetSolutionColor();
 	
 	FIntVector GetPuzzlePosition() const { return PuzzlePosition; };
+	uint32 inline GetPuzzlePosition(EPiAxis Axis) const;
 	FHints GetHints() const { return Hints; };
 	bool IsSolution() const { return bIsSolution; };
 	bool IsPainted() const { return bIsPainted; };

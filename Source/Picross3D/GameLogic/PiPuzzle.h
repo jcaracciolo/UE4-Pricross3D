@@ -53,13 +53,11 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
 	void StartCompletedAnimation();
-
-	template<typename Func>
-	void ForEachInAxis(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2, Func F);
 	
-	int GetCurrentSize(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2);
-	FHint GetCubesHint(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2);
-	void SetLineHints(const EPiAxis Axis, const int OtherAxis1, const int OtherAxis2);
+	void ForEachInAxis(const FIntVector From, const EPiAxis Axis, TFunction<void(APiCube* Cube)> F) const;
+	int GetCurrentSize(const FIntVector From, const EPiAxis Axis) const;
+	FHint GetCubesHint(const FIntVector From, const EPiAxis Axis) const;
+	void SetLineHints(const FIntVector From, const EPiAxis Axis) const;
 
 	UPROPERTY()
 	FCurrentHiddenAxis AxisHidden;
