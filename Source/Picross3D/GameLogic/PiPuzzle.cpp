@@ -199,27 +199,13 @@ void APiPuzzle::SetLineHints(const FIntVector From, const EPiAxis Axis) const
 	for (auto It = CubesMatrix.begin(From, Axis); It != CubesMatrix.DirEnd(); ++It)
 	{
 		APiCube* Cube = *It;
-		switch (Axis)
-		{
-		case EPiAxis::X:
-			Cube->SetXHint(Hint);
-			break;
-		case EPiAxis::Y:
-			Cube->SetYHint(Hint);
-			break;
-		case EPiAxis::Z:
-			Cube->SetZHint(Hint);
-			break;
-		default:
-			FAIL_UNKNOWN_AXIS;
-		}
+		PICK_FOR_AXIS(Axis, Cube->SetXHint(Hint), Cube->SetYHint(Hint), Cube->SetZHint(Hint));
 	}
 }
 
 void APiPuzzle::HideAxis(EPiAxis Axis)
 {
 	UE_LOG(LogPiPuzzle, Error, TEXT("Hiding AXIS %d"), Axis);
-
 
 	if (AxisHidden.Axis != Axis)
 	{
@@ -231,27 +217,25 @@ void APiPuzzle::HideAxis(EPiAxis Axis)
 		}
 	}
 
+	FIntVector From = PICK_FOR_AXIS(Axis, (FIntVector{AxisHidden.Amount,0,0}), (FIntVector{0,AxisHidden.Amount,0}),
+	                                (FIntVector{0,0,PuzzleSize.Z - 1 - AxisHidden.Amount}));
+	EPiAxis FirstDirection = PICK_FOR_AXIS(Axis, EPiAxis::Y, EPiAxis::X, EPiAxis::X);
+	EPiAxis SecondDirection = PICK_FOR_AXIS(Axis, EPiAxis::Z, EPiAxis::Z, EPiAxis::Y);
 
-	// uint8 SizeInSecondAxis = Axis == EPiAxis::Z ? PuzzleSize.Y : PuzzleSize.Z;
-	// for (int i = 0; i < SizeInSecondAxis; ++i)
-	// {
-	// 	if (Axis != EPiAxis::Z)
-	// 	{
-	// 		ForEachInAxis(CubesMatrix.GeAxis, AxisHidden.Amount, i, [this](APiCube* Cube)
-	// 		{
-	// 			Cube->SetActorHiddenInGame(true);
-	// 			Cube->SetActorEnableCollision(!Cube->IsHidden());
-	// 		});
-	// 	}
-	// 	else
-	// 	{
-	// 		ForEachInAxis(EPiAxis::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
-	// 		{
-	// 			Cube->SetActorHiddenInGame(true);
-	// 			Cube->SetActorEnableCollision(!Cube->IsHidden());
-	// 		});
-	// 	}
-	// }
+	int Index = 0;
+	for (auto Row = CubesMatrix.beginWithNull(From, FirstDirection); Row != CubesMatrix.DirEnd(); ++Row)
+	{
+		FIntVector SecondFrom = From + PICK_FOR_AXIS(FirstDirection, (FIntVector{Index,0,0}), (FIntVector{0,Index,0}),
+		                                             (FIntVector{0,0,Index}));
+		Index++;
+
+		for (auto It = CubesMatrix.begin(SecondFrom, SecondDirection); It != CubesMatrix.DirEnd(); ++It)
+		{
+			auto Cube = *It;
+			Cube->SetActorHiddenInGame(true);
+			Cube->SetActorEnableCollision(!Cube->IsHidden());
+		}
+	}
 
 	AxisHidden.Amount++;
 }
@@ -269,28 +253,27 @@ void APiPuzzle::ShowAxis(EPiAxis Axis)
 		}
 	}
 
-	// if (AxisHidden.Amount > 0)
-	// {
-	// 	AxisHidden.Amount--;
-	// 	uint8 SizeInSecondAxis = Axis == EPiAxis::Z ? PuzzleSize.Y : PuzzleSize.Z;
-	// 	for (int i = 0; i < SizeInSecondAxis; ++i)
-	// 	{
-	// 		if (Axis != EPiAxis::Z)
-	// 		{
-	// 			ForEachInAxis(Axis, AxisHidden.Amount, i, [this](APiCube* Cube)
-	// 			{
-	// 				Cube->SetActorHiddenInGame(false);
-	// 				Cube->SetActorEnableCollision(!Cube->IsHidden());
-	// 			});
-	// 		}
-	// 		else
-	// 		{
-	// 			ForEachInAxis(EPiAxis::X, i, PuzzleSize.Z - 1 - AxisHidden.Amount, [this](APiCube* Cube)
-	// 			{
-	// 				Cube->SetActorHiddenInGame(false);
-	// 				Cube->SetActorEnableCollision(!Cube->IsHidden());
-	// 			});
-	// 		}
-	// 	}
-	// }
+	if (AxisHidden.Amount > 0)
+	{
+		AxisHidden.Amount--;
+		FIntVector From = PICK_FOR_AXIS(Axis, (FIntVector{AxisHidden.Amount,0,0}), (FIntVector{0,AxisHidden.Amount,0}),
+		                                (FIntVector{0,0,PuzzleSize.Z - 1 - AxisHidden.Amount}));
+		EPiAxis FirstDirection = PICK_FOR_AXIS(Axis, EPiAxis::Y, EPiAxis::X, EPiAxis::X);
+		EPiAxis SecondDirection = PICK_FOR_AXIS(Axis, EPiAxis::Z, EPiAxis::Z, EPiAxis::Y);
+
+		int Index = 0;
+		for (auto Row = CubesMatrix.beginWithNull(From, FirstDirection); Row != CubesMatrix.DirEnd(); ++Row)
+		{
+			FIntVector SecondFrom = From + PICK_FOR_AXIS(FirstDirection, (FIntVector{Index,0,0}), (FIntVector{0,Index,0}),
+			                                             (FIntVector{0,0,Index}));
+			Index++;
+
+			for (auto It = CubesMatrix.begin(SecondFrom, SecondDirection); It != CubesMatrix.DirEnd(); ++It)
+			{
+				auto Cube = *It;
+				Cube->SetActorHiddenInGame(false);
+				Cube->SetActorEnableCollision(!Cube->IsHidden());
+			}
+		}
+	}
 }
