@@ -27,12 +27,15 @@ uint32 inline APiCube::GetPuzzlePosition(EPiAxis Axis) const
 {
 	switch (Axis)
 	{
-		case EPiAxis::X: return PuzzlePosition.X;
-		case EPiAxis::Y: return PuzzlePosition.Y;
-		case EPiAxis::Z: return PuzzlePosition.Z;
+	case EPiAxis::X:
+		return PuzzlePosition.X;
+	case EPiAxis::Y:
+		return PuzzlePosition.Y;
+	case EPiAxis::Z:
+		return PuzzlePosition.Z;
+	default: FAIL_UNKNOWN_AXIS;
 	}
 
-	check(0);
 	return 0;
 }
 

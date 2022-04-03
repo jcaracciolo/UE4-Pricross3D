@@ -32,7 +32,7 @@ void APiPuzzle::BeginPlay()
 		//TODO can i do an if like this or should i check ISValid ?
 		if (APiCube* Cube = Cast<APiCube>(ChildActor->GetChildActor()))
 		{
-			CubesArray.Add(Cube);
+			CubesMatrix.Add(Cube);
 		}
 	});
 
@@ -85,7 +85,7 @@ void APiPuzzle::GenerateCubes()
 	}
 }
 
-void APiPuzzle::ShowSolution()
+void APiPuzzle::ShowSolution() const
 {
 	ForEachComponent<UChildActorComponent>(false, [this](UChildActorComponent* ChildActor)
 	{
@@ -110,7 +110,7 @@ void APiPuzzle::Break(APiCube* Cube)
 	UE_LOG(LogPiPuzzle, Log, TEXT("Breaking Cube %d,%d,%d"), PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
 	if (!Cube->IsSolution() && !Cube->IsPainted())
 	{
-		CubesArray[CubesArray.IndexOfByKey(Cube)] = nullptr;
+		CubesMatrix.Remove(Cube->GetPuzzlePosition());
 		Cube->Destroy();
 		// GetCurrentSize(Cube, EPiAxis::X);
 		// GetCurrentSize(Cube, EPiAxis::Y);
@@ -125,12 +125,9 @@ void APiPuzzle::Paint(APiCube* Cube)
 
 bool APiPuzzle::IsCompleted()
 {
-	for (auto Cube : CubesArray)
+	for (auto Cube : CubesMatrix)
 	{
-		FIntVector PuzzlePosition = Cube->GetPuzzlePosition();
-		UE_LOG(LogPiPuzzle, Log, TEXT("Checking Cube %d,%d,%d"), PuzzlePosition.X, PuzzlePosition.Y, PuzzlePosition.Z);
-
-		if (IsValid(Cube) && !Cube->IsSolution())
+		if (!Cube->IsSolution())
 		{
 			return false;
 		}
@@ -141,7 +138,7 @@ bool APiPuzzle::IsCompleted()
 
 void APiPuzzle::StartCompletedAnimation_Implementation()
 {
-	for (auto Cube : CubesArray)
+	for (auto Cube : CubesMatrix)
 	{
 		Cube->SetSolutionColor();
 	}
@@ -151,7 +148,7 @@ void APiPuzzle::StartCompletedAnimation_Implementation()
 int APiPuzzle::GetCurrentSize(const FIntVector From, const EPiAxis Axis) const
 {
 	int Size = 0;
-	for (auto It = CubesMatrix.cbegin(From, Axis); It != CubesMatrix.cend(); ++It)
+	for (FPuzzleMatrix::ConstDirIterator It = CubesMatrix.begin(From, Axis); It != CubesMatrix.DirEnd(); ++It)
 	{
 		const APiCube* Cube = *It;
 		if (IsValid(Cube))
@@ -170,7 +167,7 @@ FHint APiPuzzle::GetCubesHint(const FIntVector From, const EPiAxis Axis) const
 	bool bInSpace = true;
 
 	uint8 Solutions = 0;
-	for (auto It = CubesMatrix.cbegin(From, Axis); It != CubesMatrix.cend(); ++It)
+	for (FPuzzleMatrix::ConstDirIterator It = CubesMatrix.begin(From, Axis); It != CubesMatrix.DirEnd(); ++It)
 	{
 		const APiCube* Cube = *It;
 		if (IsValid(Cube))
@@ -206,7 +203,7 @@ FHint APiPuzzle::GetCubesHint(const FIntVector From, const EPiAxis Axis) const
 void APiPuzzle::SetLineHints(const FIntVector From, const EPiAxis Axis) const
 {
 	FHint Hint{GetCubesHint(From, Axis)};
-	for (auto It = CubesMatrix.begin(From, Axis); It != CubesMatrix.end(); ++It)
+	for (auto It = CubesMatrix.begin(From, Axis); It != CubesMatrix.DirEnd(); ++It)
 	{
 		APiCube* Cube = *It;
 		if (IsValid(Cube))
@@ -235,7 +232,7 @@ void APiPuzzle::HideAxis(EPiAxis Axis)
 	if (AxisHidden.Axis != Axis)
 	{
 		AxisHidden = {Axis, 0};
-		for (auto Cube : CubesArray)
+		for (auto Cube : CubesMatrix)
 		{
 			Cube->SetActorHiddenInGame(false);
 			Cube->SetActorEnableCollision(!Cube->IsHidden());
@@ -273,7 +270,7 @@ void APiPuzzle::ShowAxis(EPiAxis Axis)
 	if (AxisHidden.Axis != Axis)
 	{
 		AxisHidden = {Axis, 0};
-		for (auto Cube : CubesArray)
+		for (auto Cube : CubesMatrix)
 		{
 			Cube->SetActorHiddenInGame(false);
 			Cube->SetActorEnableCollision(!Cube->IsHidden());

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Definitions.h"
+#include "TNonNullCheckedPointerIterator.h"
 #include "Picross3D/GameLogic/PiCube.h"
 #include "FPuzzleMatrix.generated.h"
 
@@ -17,11 +18,19 @@ struct PICROSS3D_API FPuzzleMatrix
 	GENERATED_BODY()
 
 	FPuzzleMatrix();
-	explicit FPuzzleMatrix(TArray<APiCube*>* NewArray);
+
+	UPROPERTY()
+	TArray<APiCube*> Array;
+
+	void Add(APiCube* Cube)
+	{
+		Array.Add(Cube);
+	}
 
 	void SetupMatrix(const uint32 X, const uint32 Y, const uint32 Z);
-	APiCube* Get(const uint32 X, const uint32 Y, const uint32 Z) const;
+	APiCube* operator()(FIntVector Position) const;
 	uint32 inline GetMaxSize(EPiAxis Axis) const;
+	void Remove(FIntVector Position);
 
 private:
 	template <typename T>
@@ -35,13 +44,14 @@ private:
 		TMatrixIterator() noexcept : bIsEndIterator(true), Direction()
 		{
 		}
-		
+
 		uint32 GetCurrentDirectionPosition() noexcept;
 		TMatrixIterator<T>& operator++() noexcept;
 		bool operator!=(const TMatrixIterator<T>& Other) const noexcept;
+
 		T operator*() const noexcept
 		{
-			return this->Matrix->Get(CurrentPosition.X, CurrentPosition.Y, CurrentPosition.Z);
+			return this->Matrix->operator()(CurrentPosition);
 		}
 
 	private:
@@ -49,33 +59,57 @@ private:
 		const FPuzzleMatrix* Matrix = nullptr;
 		FIntVector CurrentPosition = {0, 0, 0};
 		const EPiAxis Direction;
-		
 	};
 
 public:
-	TMatrixIterator<APiCube*> begin(FIntVector StartingPosition, EPiAxis Direction) const noexcept
+	
+	typedef TMatrixIterator<APiCube*> DirIterator; 
+	typedef TMatrixIterator<APiCube* const> ConstDirIterator; 
+
+	FORCEINLINE DirIterator begin(const FIntVector StartingPosition, const EPiAxis Direction) noexcept
 	{
-		return TMatrixIterator<APiCube*>(this, StartingPosition, Direction);
+		return DirIterator(this, StartingPosition, Direction);
 	}
 
-	static TMatrixIterator<APiCube*> end() noexcept
+	FORCEINLINE ConstDirIterator begin(const FIntVector StartingPosition, const EPiAxis Direction) const noexcept
 	{
-		return TMatrixIterator<APiCube*>();
-	};
-
-	TMatrixIterator<const APiCube*> cbegin(FIntVector StartingPosition, EPiAxis Direction) const noexcept
-	{
-		return TMatrixIterator<const APiCube*>(this, StartingPosition, Direction);
+		return ConstDirIterator(this, StartingPosition, Direction);
 	}
 
-	static TMatrixIterator<const APiCube*> cend() noexcept
+	FORCEINLINE DirIterator DirEnd() noexcept
 	{
-		return TMatrixIterator<const APiCube*>();
+		return DirIterator();
 	};
+
+	FORCEINLINE ConstDirIterator DirEnd() const noexcept
+	{
+		return ConstDirIterator();
+	};
+
+	FORCEINLINE auto begin() const noexcept
+	{
+		return TNonNullCheckedPointerIterator<APiCube* const>(Array.begin(), Array.end());
+	}
+
+	FORCEINLINE auto begin() noexcept
+	{
+		return TNonNullCheckedPointerIterator<APiCube*>(Array.begin(), Array.end());
+	}
+
+
+	FORCEINLINE auto end() const noexcept
+	{
+		return Array.end();
+	};
+
+	auto end() noexcept
+	{
+		return Array.end();
+	}
 
 private:
-	uint32 SizeX = 0, SizeY = 0, SizeZ = 0;
-	TArray<APiCube*>* Array;
+	int32 SizeX = 0, SizeY = 0, SizeZ = 0;
+	inline uint32 ToIndex(FIntVector Position) const;
 };
 
 template <typename T>
@@ -89,8 +123,7 @@ uint32 FPuzzleMatrix::TMatrixIterator<T>::GetCurrentDirectionPosition() noexcept
 		return CurrentPosition.Y;
 	case EPiAxis::Z:
 		return CurrentPosition.Z;
-	default:
-		checkf(0, TEXT("Unknown Axis"));
+	default: FAIL_UNKNOWN_AXIS;
 	}
 
 	return -1;
@@ -113,8 +146,7 @@ FPuzzleMatrix::TMatrixIterator<T>& FPuzzleMatrix::TMatrixIterator<T>::operator++
 		case EPiAxis::Z:
 			CurrentPosition += FIntVector{0, 0, 1};
 			break;
-		default:
-			checkf(0, TEXT("Unknown Axis"));
+		default: FAIL_UNKNOWN_AXIS;
 		}
 	}
 	else
@@ -128,7 +160,7 @@ FPuzzleMatrix::TMatrixIterator<T>& FPuzzleMatrix::TMatrixIterator<T>::operator++
 template <typename T>
 bool FPuzzleMatrix::TMatrixIterator<T>::operator!=(const TMatrixIterator<T>& Other) const noexcept
 {
-	if(bIsEndIterator && Other.bIsEndIterator)
+	if (bIsEndIterator && Other.bIsEndIterator)
 	{
 		return false;
 	}

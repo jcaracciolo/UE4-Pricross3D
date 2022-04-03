@@ -38,7 +38,7 @@ public:
 	void GenerateCubes();
 
 	UFUNCTION(CallInEditor, Category="Cubes")
-	void ShowSolution();
+	void ShowSolution() const;
 	
 	//TODO Do i just pass a pointer here? will i have some issues with GC?
 	// The same cube is refereced somewhere else. but what if it isnt?
@@ -74,6 +74,5 @@ private:
 	TSubclassOf<APiCube> CubeClass;
 
 	UPROPERTY()
-	TArray<APiCube*> CubesArray;
-	FPuzzleMatrix CubesMatrix{&CubesArray};
+	FPuzzleMatrix CubesMatrix;
 };

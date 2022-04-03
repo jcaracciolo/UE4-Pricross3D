@@ -3,26 +3,21 @@
 #include "FPuzzleMatrix.h"
 #include "Picross3D/GameLogic/PiCube.h"
 
-FPuzzleMatrix::FPuzzleMatrix(): Array(nullptr)
-{
-}
-
-FPuzzleMatrix::FPuzzleMatrix(TArray<APiCube*>* NewArray): Array(NewArray)
+FPuzzleMatrix::FPuzzleMatrix()
 {
 }
 
 void FPuzzleMatrix::SetupMatrix(const uint32 X, const uint32 Y, const uint32 Z)
 {
-	checkf(X > 0 && Y > 0 && Z > 0, TEXT("TPuzzleMatrix: Dimensions are %d,%d,%d"),
-	       X, Y, Z);
+	ensureMsgf(X > 0 && Y > 0 && Z > 0, TEXT("FPuzzleMatrix: Dimensions are %d,%d,%d"), X, Y, Z);
 
-	checkf(Array->Num() == X*Y*Z, TEXT("TPuzzleMatrix: Size of the array does not contain %d elements"), X*Y*Z);
+	ensureMsgf(Array.Num() == X*Y*Z, TEXT("FPuzzleMatrix: Size of the array does not contain %d elements"), X*Y*Z);
 
 	SizeX = X;
 	SizeY = Y;
 	SizeZ = Z;
 
-	Array->Sort([](const APiCube& One, const APiCube& Two)
+	Array.Sort([](const APiCube& One, const APiCube& Two)
 	{
 		if (One.GetPuzzlePosition().X == Two.GetPuzzlePosition().X)
 		{
@@ -30,33 +25,43 @@ void FPuzzleMatrix::SetupMatrix(const uint32 X, const uint32 Y, const uint32 Z)
 			{
 				return One.GetPuzzlePosition().Z < Two.GetPuzzlePosition().Z;
 			}
-	
+
 			return One.GetPuzzlePosition().Y < Two.GetPuzzlePosition().Y;
 		}
-		
+
 		return One.GetPuzzlePosition().X < Two.GetPuzzlePosition().X;
 	});
 }
-
-APiCube* FPuzzleMatrix::Get(const uint32 X, const uint32 Y, const uint32 Z) const
+inline uint32 FPuzzleMatrix::ToIndex(FIntVector Position) const
 {
-	checkf(SizeX > X && SizeY > Y && SizeZ > Z,
-	       TEXT("TPuzzleMatrix: Access outside of scope %d,%d,%d of %d,%d,%d"), X, Y, Z, SizeX,
-	       SizeY, SizeZ);
+	ensureMsgf(SizeX > Position.X && SizeY > Position.Y && SizeZ > Position.Z,
+		   TEXT("FPuzzleMatrix: Access outside of scope %d,%d,%d of %d,%d,%d"), Position.X, Position.Y, Position.Z, SizeX, SizeY, SizeZ);
 
-	return Array->operator[](Z + Y * SizeZ + X * SizeZ * SizeY);
+	return Position.Z + Position.Y * SizeZ + Position.X * SizeZ * SizeY;
+}
+
+APiCube* FPuzzleMatrix::operator()(FIntVector Position) const
+{
+	return Array[ToIndex(Position)];
 }
 
 uint32 FPuzzleMatrix::GetMaxSize(EPiAxis Axis) const
 {
 	switch (Axis)
 	{
-	case EPiAxis::X: return SizeX;
-	case EPiAxis::Y: return SizeY;
-	case EPiAxis::Z: return SizeZ;
+	case EPiAxis::X:
+		return SizeX;
+	case EPiAxis::Y:
+		return SizeY;
+	case EPiAxis::Z:
+		return SizeZ;
+	default: FAIL_UNKNOWN_AXIS;
 	}
 
-	check(0);
 	return 0;
 }
 
+void FPuzzleMatrix::Remove(FIntVector Position)
+{
+	Array[ToIndex(Position)] = nullptr;
+}
