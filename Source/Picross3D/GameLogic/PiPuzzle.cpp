@@ -148,13 +148,9 @@ void APiPuzzle::StartCompletedAnimation_Implementation()
 int APiPuzzle::GetCurrentSize(const FIntVector From, const EPiAxis Axis) const
 {
 	int Size = 0;
-	for (FPuzzleMatrix::ConstDirIterator It = CubesMatrix.begin(From, Axis); It != CubesMatrix.DirEnd(); ++It)
+	for (auto It = CubesMatrix.begin(From, Axis); It != CubesMatrix.DirEnd(); ++It)
 	{
-		const APiCube* Cube = *It;
-		if (IsValid(Cube))
-		{
-			Size++;
-		}
+		Size++;
 	}
 
 	return Size;
@@ -167,24 +163,21 @@ FHint APiPuzzle::GetCubesHint(const FIntVector From, const EPiAxis Axis) const
 	bool bInSpace = true;
 
 	uint8 Solutions = 0;
-	for (FPuzzleMatrix::ConstDirIterator It = CubesMatrix.begin(From, Axis); It != CubesMatrix.DirEnd(); ++It)
+	for (auto It = CubesMatrix.beginWithNull(From, Axis); It != CubesMatrix.DirEnd(); ++It)
 	{
 		const APiCube* Cube = *It;
-		if (IsValid(Cube))
+		if (IsValid(Cube) && Cube->IsSolution())
 		{
-			if (Cube->IsSolution())
+			Solutions++;
+			if (bInSpace)
 			{
-				Solutions++;
-				if (bInSpace)
-				{
-					bInSpace = false;
-					Spaces++;
-				}
+				bInSpace = false;
+				Spaces++;
 			}
-			else
-			{
-				bInSpace = true;
-			}
+		}
+		else
+		{
+			bInSpace = true;
 		}
 	}
 
@@ -206,20 +199,19 @@ void APiPuzzle::SetLineHints(const FIntVector From, const EPiAxis Axis) const
 	for (auto It = CubesMatrix.begin(From, Axis); It != CubesMatrix.DirEnd(); ++It)
 	{
 		APiCube* Cube = *It;
-		if (IsValid(Cube))
+		switch (Axis)
 		{
-			switch (Axis)
-			{
-			case EPiAxis::X:
-				Cube->SetXHint(Hint);
-				break;
-			case EPiAxis::Y:
-				Cube->SetYHint(Hint);
-				break;
-			case EPiAxis::Z:
-				Cube->SetZHint(Hint);
-				break;
-			}
+		case EPiAxis::X:
+			Cube->SetXHint(Hint);
+			break;
+		case EPiAxis::Y:
+			Cube->SetYHint(Hint);
+			break;
+		case EPiAxis::Z:
+			Cube->SetZHint(Hint);
+			break;
+		default:
+			FAIL_UNKNOWN_AXIS;
 		}
 	}
 }

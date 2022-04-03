@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Definitions.h"
-#include "TNonNullCheckedPointerIterator.h"
+#include "TNonNullIterator.h"
 #include "Picross3D/GameLogic/PiCube.h"
 #include "FPuzzleMatrix.generated.h"
 
@@ -62,38 +62,49 @@ private:
 	};
 
 public:
-	
-	typedef TMatrixIterator<APiCube*> DirIterator; 
-	typedef TMatrixIterator<APiCube* const> ConstDirIterator; 
+	typedef TMatrixIterator<APiCube*> NullableDirIterator;
+	typedef TMatrixIterator<APiCube* const> NullableConstDirIterator;
+	typedef TNonNullIterator<APiCube*, NullableDirIterator> DirIterator;
+	typedef TNonNullIterator<APiCube* const, NullableConstDirIterator> ConstDirIterator;
 
 	FORCEINLINE DirIterator begin(const FIntVector StartingPosition, const EPiAxis Direction) noexcept
 	{
-		return DirIterator(this, StartingPosition, Direction);
+		return DirIterator(NullableDirIterator(this, StartingPosition, Direction), DirEnd());
 	}
 
 	FORCEINLINE ConstDirIterator begin(const FIntVector StartingPosition, const EPiAxis Direction) const noexcept
 	{
-		return ConstDirIterator(this, StartingPosition, Direction);
+		return ConstDirIterator(NullableConstDirIterator(this, StartingPosition, Direction), DirEnd());
 	}
 
-	FORCEINLINE DirIterator DirEnd() noexcept
+	FORCEINLINE NullableDirIterator beginWithNull(const FIntVector StartingPosition, const EPiAxis Direction) noexcept
 	{
-		return DirIterator();
+		return NullableDirIterator(this, StartingPosition, Direction);
+	}
+
+	FORCEINLINE NullableConstDirIterator beginWithNull(const FIntVector StartingPosition, const EPiAxis Direction) const noexcept
+	{
+		return NullableConstDirIterator(this, StartingPosition, Direction);
+	}
+
+	FORCEINLINE NullableDirIterator DirEnd() noexcept
+	{
+		return NullableDirIterator();
 	};
 
-	FORCEINLINE ConstDirIterator DirEnd() const noexcept
+	FORCEINLINE NullableConstDirIterator DirEnd() const noexcept
 	{
-		return ConstDirIterator();
+		return NullableConstDirIterator();
 	};
 
 	FORCEINLINE auto begin() const noexcept
 	{
-		return TNonNullCheckedPointerIterator<APiCube* const>(Array.begin(), Array.end());
+		return TNonNullIterator<APiCube* const, decltype(Array.begin())>(Array.begin(), Array.end());
 	}
 
 	FORCEINLINE auto begin() noexcept
 	{
-		return TNonNullCheckedPointerIterator<APiCube*>(Array.begin(), Array.end());
+		return TNonNullIterator<APiCube*, decltype(Array.begin())>(Array.begin(), Array.end());
 	}
 
 

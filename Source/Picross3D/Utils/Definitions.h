@@ -11,4 +11,4 @@ enum class EPiAxis: uint8
 };
 
 
-#define FAIL_UNKNOWN_AXIS verifyf(0, TEXT("Unknown Axis"))
+#define FAIL_UNKNOWN_AXIS verifyf(0, TEXT("Unknown Axis"));
