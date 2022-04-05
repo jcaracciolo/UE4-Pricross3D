@@ -26,7 +26,11 @@ void APiPuzzle::BeginPlay()
 		return;
 	}
 	Pawn->FitPuzzleInViewport(PuzzleSize.GetMax());
+}
 
+void APiPuzzle::SetupMatrix()
+{
+	CubesMatrix.Array.Empty();
 	ForEachComponent<UChildActorComponent>(false, [this](UChildActorComponent* ChildActor)
 	{
 		//TODO can i do an if like this or should i check ISValid ?
@@ -36,8 +40,13 @@ void APiPuzzle::BeginPlay()
 		}
 	});
 
+	//TODO We are re-sorting here but whatever
 	CubesMatrix.SetupMatrix(PuzzleSize.X, PuzzleSize.Y, PuzzleSize.Z);
+}
 
+void APiPuzzle::SetupHints()
+{
+	SetupMatrix();
 
 	for (int Y = 0; Y < PuzzleSize.Y; ++Y)
 	{
@@ -62,6 +71,7 @@ void APiPuzzle::BeginPlay()
 	}
 }
 
+
 // Called when the game starts or when spawned
 void APiPuzzle::GenerateCubes()
 {
@@ -85,7 +95,7 @@ void APiPuzzle::GenerateCubes()
 	}
 }
 
-void APiPuzzle::ShowSolution() const
+void APiPuzzle::ToggleSolution() const
 {
 	ForEachComponent<UChildActorComponent>(false, [this](UChildActorComponent* ChildActor)
 	{
@@ -94,11 +104,11 @@ void APiPuzzle::ShowSolution() const
 		{
 			if (!Cube->IsSolution())
 			{
-				Cube->SetHidden(true);
+				Cube->SetIsTemporarilyHiddenInEditor(!Cube->IsTemporarilyHiddenInEditor());
 			}
 			else
 			{
-				Cube->SetSolutionColor();
+				Cube->ToggleSolutionColor();
 			}
 		}
 	});
@@ -140,7 +150,7 @@ void APiPuzzle::StartCompletedAnimation_Implementation()
 {
 	for (auto Cube : CubesMatrix)
 	{
-		Cube->SetSolutionColor();
+		Cube->ToggleSolutionColor();
 	}
 }
 

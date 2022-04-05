@@ -33,13 +33,17 @@ public:
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void SetupMatrix();
+
+	UFUNCTION(CallInEditor, Category="Cubes")
+	void SetupHints();
 
 	UFUNCTION(CallInEditor, Category="Cubes")
 	void GenerateCubes();
 
 	UFUNCTION(CallInEditor, Category="Cubes")
-	void ShowSolution() const;
-	
+	void ToggleSolution() const;
+
 	//TODO Do i just pass a pointer here? will i have some issues with GC?
 	// The same cube is refereced somewhere else. but what if it isnt?
 	UFUNCTION()

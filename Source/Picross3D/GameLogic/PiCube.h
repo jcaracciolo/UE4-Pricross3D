@@ -11,7 +11,6 @@ UENUM(BlueprintType)
 enum class EHintAppearance: uint8
 {
 	// Indicates no hint should be given
-	NONE=0,
 	ONCE,
 	TWICE,
 	MANY,
@@ -22,10 +21,10 @@ struct FHint
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	uint8 Number;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EHintAppearance Appearance;
 };
 
@@ -34,8 +33,11 @@ struct FHints
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FHint X;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FHint Y;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FHint Z;
 };
 
@@ -60,17 +62,17 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
 	void TogglePaint();
 
-	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Cubes")
 	void SetXHint(FHint Hint);
 
-	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Cubes")
 	void SetYHint(FHint Hint);
 
-	UFUNCTION(BlueprintNativeEvent, Category="Cubes")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category="Cubes")
 	void SetZHint(FHint Hint);
 
-	UFUNCTION(BlueprintImplementableEvent, Category="Cubes")
-	void SetSolutionColor();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="Cubes")
+	void ToggleSolutionColor();
 	
 	FIntVector GetPuzzlePosition() const { return PuzzlePosition; };
 	uint32 inline GetPuzzlePosition(EPiAxis Axis) const;
@@ -79,8 +81,8 @@ public:
 	bool IsPainted() const { return bIsPainted; };
 
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
-	FHints Hints{{0, EHintAppearance::NONE}, {0, EHintAppearance::NONE}, {0, EHintAppearance::NONE}};
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
+	FHints Hints;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="PiPuzzle", meta=(AllowPrivateAccess = "true"))
 	FIntVector PuzzlePosition;
